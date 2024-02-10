@@ -1,8 +1,15 @@
 name: CI
 
 on:
+  # Trigger the workflow every time a push is made to the main branch
   push:
+    branches:
+      - main
+  # Trigger the workflow when a pull request is created targeting the main branch
   pull_request:
+    branches:
+      - main
+  # Allows the workflow to be run manually from the Actions tab on GitHub
   workflow_dispatch:
 
 jobs:
