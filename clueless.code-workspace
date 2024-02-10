@@ -5,7 +5,11 @@
     }
   ],
   "settings": {
-    "files.eol":"\n",
+    // JavaScript/TypeScript/JSX/TSX/JSON language configuration
+    "[javascript][typescript][typescriptreact][javascriptreact][json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.eol": "\n",
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
