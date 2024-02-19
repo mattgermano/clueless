@@ -1,6 +1,6 @@
 # Compiled python
 *.pyc
-**/pycache/*
+**/__pycache__/*
 
 
 # SQLite
