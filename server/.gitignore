@@ -1,0 +1,10 @@
+# Compiled python
+*.pyc
+**/__pycache__/*
+
+
+# SQLite
+db.sqlite3
+
+# Environment Variables
+.env

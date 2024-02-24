@@ -9,6 +9,10 @@
     "[javascript][typescript][typescriptreact][javascriptreact][json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    // Python language configuration
+    "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff"
+    },
     "files.eol": "\n",
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
