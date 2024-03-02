@@ -113,6 +113,8 @@ class CluelessConsumer(WebsocketConsumer):
         """
         event = json.loads(text_data)
 
+        print(f"Message: {text_data}")
+
         if event["type"] == "init":
             if "join" in event:
                 # Players join an existing game

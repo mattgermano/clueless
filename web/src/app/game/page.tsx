@@ -5,10 +5,8 @@ import Particles from "@/components/Particles";
 import { Alert, Link } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useSearchParams } from "next/navigation";
 
 export default function Game() {
-  const searchParams = useSearchParams();
   const [error, setError] = useState();
   const [joinId, setJoinId] = useState();
   const [watchId, setWatchId] = useState();
@@ -52,6 +50,8 @@ export default function Game() {
 
     // Send an "init" event according to who is connecting.
     if (readyState === ReadyState.OPEN) {
+      const searchParams = new URLSearchParams(document.location.search);
+
       if (searchParams.has("join")) {
         // Player joining an existing game
         event = {
@@ -73,7 +73,7 @@ export default function Game() {
       console.log(JSON.stringify(event));
       sendJsonMessage(event);
     }
-  }, [readyState, sendJsonMessage, searchParams]);
+  }, [readyState, sendJsonMessage]);
 
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
