@@ -9,5 +9,5 @@ from . import consumers
 
 
 websocket_urlpatterns = [
-    re_path(r"ws/hello-django$", consumers.PlayerMoveConsumer.as_asgi())
+    re_path(r"ws/hello-django$", consumers.CluelessConsumer.as_asgi())
 ]
