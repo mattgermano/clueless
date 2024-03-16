@@ -82,5 +82,9 @@ class Clueless:
                 self.winner = "miss_scarlet"
         else:
             raise RuntimeError(
-                f"False accusation! Solution is {self.solution["suspect"]} with the {self.solution["weapon"]} in the {self.solution["room"]}"
+                "False accusation! Solution is {} with the {} in the {}".format(
+                    self.solution["suspect"],
+                    self.solution["weapon"],
+                    self.solution["room"],
+                )
             )
