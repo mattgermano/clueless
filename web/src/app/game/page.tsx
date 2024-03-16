@@ -1,17 +1,23 @@
 "use client";
 
+import AccusationButton from "@/components/AccusationButton";
 import Board from "@/components/Board";
+import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
-import { Alert, Link } from "@mui/material";
+import SuggestionButton from "@/components/SuggestionButton";
+import TextWithCopyButton from "@/components/TextWithCopyButton";
+import { Alert, Box, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function Game() {
   const [error, setError] = useState();
+  const [winner, setWinner] = useState();
   const [joinId, setJoinId] = useState();
   const [watchId, setWatchId] = useState();
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  const WS_URL = "ws://127.0.0.1:8000/ws/hello-django";
+  const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {
@@ -23,9 +29,9 @@ export default function Game() {
   function getWebSocketServer() {
     if (window.location.host === "clueless.cassini.dev") {
       // TODO: Update with production server once deployed
-      return "ws://127.0.0.1:8000/ws/hello-django";
+      return "ws://127.0.0.1:8000/ws/clueless";
     } else if (window.location.host === "localhost:3000") {
-      return "ws://127.0.0.1:8000/ws/hello-django";
+      return "ws://127.0.0.1:8000/ws/clueless";
     } else {
       throw new Error(`Unsupported host: ${window.location.host}`);
     }
@@ -38,6 +44,42 @@ export default function Game() {
         type: "move",
         x: x,
         y: y,
+        game: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleSuggestionClick(
+    suspect: string,
+    weapon: string,
+    room: string,
+  ) {
+    if (joinId) {
+      const event = {
+        type: "suggestion",
+        suspect: suspect,
+        weapon: weapon,
+        room: room,
+        game: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleAccusationClick(
+    suspect: string,
+    weapon: string,
+    room: string,
+  ) {
+    if (joinId) {
+      const event = {
+        type: "accusation",
+        suspect: suspect,
+        weapon: weapon,
+        room: room,
         game: joinId,
       };
 
@@ -70,7 +112,9 @@ export default function Game() {
           type: "init",
         };
       }
-      console.log(JSON.stringify(event));
+      console.log(
+        `Sending event to backend: ${JSON.stringify(event, null, 2)}`,
+      );
       sendJsonMessage(event);
     }
   }, [readyState, sendJsonMessage]);
@@ -78,7 +122,9 @@ export default function Game() {
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage) {
-      console.log(`Got a new message: ${JSON.stringify(lastJsonMessage)}`);
+      console.log(
+        `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
+      );
 
       const event: any = lastJsonMessage;
       switch (event.type) {
@@ -93,6 +139,7 @@ export default function Game() {
           break;
 
         case "win":
+          setWinner(event.player);
           break;
 
         case "error":
@@ -113,6 +160,19 @@ export default function Game() {
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setOpenSnackbar(true);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
@@ -126,23 +186,35 @@ export default function Game() {
           </div>
           <div className="mb-2">
             {lastJsonMessage ? (
-              <span>Last message: {JSON.stringify(lastJsonMessage)}</span>
+              <span>
+                Last message from server:{" "}
+                {JSON.stringify(lastJsonMessage, null, 2)}
+              </span>
             ) : null}
           </div>
-          <div>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             {joinId && (
-              <Link href={`http://localhost:3000/game?join=${joinId}`}>
-                Join Game Link
-              </Link>
+              <TextWithCopyButton
+                title="Join Game ID:"
+                text={joinId}
+                handleCopy={handleCopy}
+              />
             )}
-          </div>
-          <div>
             {watchId && (
-              <Link href={`http://localhost:3000/game?watch=${watchId}`}>
-                Watch Game Link
-              </Link>
+              <TextWithCopyButton
+                title="Watch Game ID:"
+                text={watchId}
+                handleCopy={handleCopy}
+              />
             )}
-          </div>
+          </Box>
           <div className="mb-2 mt-2">
             {error && (
               <Alert className="justify-center" severity="error">
@@ -150,7 +222,33 @@ export default function Game() {
               </Alert>
             )}
           </div>
+          <div className="mb-2 mt-2">
+            {winner && (
+              <Alert className="justify-center" severity="success">
+                {winner} has won the game!
+              </Alert>
+            )}
+          </div>
           <Board handleRoomClick={handleRoomClick} />
+          <div className="inline-flex mt-2 justify-center space-x-4">
+            <SuggestionButton handleSuggestionClick={handleSuggestionClick} />
+            <AccusationButton handleAccusationClick={handleAccusationClick} />
+            <ClueSheet />
+          </div>
+
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000}
+            onClose={handleCloseSnackbar}
+          >
+            <Alert
+              onClose={handleCloseSnackbar}
+              severity="success"
+              sx={{ width: "100%" }}
+            >
+              Text copied to clipboard!
+            </Alert>
+          </Snackbar>
         </div>
       </div>
     </main>

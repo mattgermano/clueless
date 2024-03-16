@@ -8,6 +8,4 @@ from . import consumers
 # ws.urls.urlpatterns
 
 
-websocket_urlpatterns = [
-    re_path(r"ws/hello-django$", consumers.CluelessConsumer.as_asgi())
-]
+websocket_urlpatterns = [re_path(r"ws/clueless$", consumers.CluelessConsumer.as_asgi())]

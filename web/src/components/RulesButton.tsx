@@ -49,6 +49,15 @@ export default function RulesButton() {
               When it is your turn, you do not need to roll a die.
             </ListItem>
             <ListItem>
+              If you are in a room, you may do one of the following: move
+              through one of the doors to the hallway (if it is not blocked),
+              take a secret passage to a diagonally opposite room (if there is
+              one) and make a suggestion, or if you were moved to the room by
+              another player who has made a suggestion, you may, if you wish,
+              stay in that room and make a suggestion. Otherwise, you may move
+              through a doorway or take a secret passage as described above.
+            </ListItem>
+            <ListItem>
               If you are in a hallway, you must move to one of the two rooms
               accessible from that hallway and make a suggestion.
             </ListItem>
@@ -73,11 +82,7 @@ export default function RulesButton() {
             <ListItem>
               You may make an accusation at any time during your turn.
             </ListItem>
-            <ListItem>
-              You do not need to show weapons on the board, since they really do
-              not do anything (but this would be a nice feature). But you should
-              show where each of the characters is located.
-            </ListItem>
+            <ListItem>Source: Clue-Less rules document on Canvas</ListItem>
           </List>
           <Button
             variant="contained"

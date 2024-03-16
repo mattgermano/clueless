@@ -97,11 +97,25 @@ class CluelessConsumer(WebsocketConsumer):
         # TODO: Update this to broadcast to all connected clients
         self.send(json.dumps(event))
 
-    def suggest(self):
-        pass
+    def suggest(self, game_id, suspect, weapon, room):
+        game = JOIN[game_id]
+        try:
+            # Make the accusation
+            game.suggest(suspect, weapon)
+        except RuntimeError as exc:
+            self.error(str(exc))
 
-    def accuse(self):
-        pass
+    def accuse(self, game_id, suspect, weapon, room):
+        game = JOIN[game_id]
+        try:
+            # Make the accusation
+            game.accuse(suspect, weapon, room)
+
+            if game.winner is not None:
+                event = {"type": "win", "player": "miss_scarlett"}
+                self.send(json.dumps(event))
+        except RuntimeError as exc:
+            self.error(str(exc))
 
     def receive(self, text_data):
         """Receives a message from the Websocket
@@ -112,8 +126,9 @@ class CluelessConsumer(WebsocketConsumer):
             The received message
         """
         event = json.loads(text_data)
+        event_formatted = json.dumps(event, indent=2)
 
-        print(f"Message: {text_data}")
+        print(f"Received event from frontend: {event_formatted}\n")
 
         if event["type"] == "init":
             if "join" in event:
@@ -128,8 +143,9 @@ class CluelessConsumer(WebsocketConsumer):
         elif event["type"] == "move":
             self.move(event["game"], event["x"], event["y"])
         elif event["type"] == "suggestion":
-            self.suggest()
+            # self.accuse(event["game"], event["suspect"], event["weapon"], event["room"])
+            pass
         elif event["type"] == "accusation":
-            self.accuse()
+            self.accuse(event["game"], event["suspect"], event["weapon"], event["room"])
         else:
             self.error("Received invalid event!")
