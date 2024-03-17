@@ -2,12 +2,14 @@
 
 import Square from "@/components/Square";
 import Grid from "@mui/material/Unstable_Grid2";
+import { GetCharacterByPosition, PlayerPositions } from "./utils/characters";
 
 interface BoardProps {
-  handleRoomClick: any;
+  positions?: PlayerPositions;
+  handleRoomClick(x: Number, y: Number): void;
 }
 
-export default function Board({ handleRoomClick }: BoardProps) {
+export default function Board({ positions, handleRoomClick }: BoardProps) {
   return (
     <Grid container spacing={2} columns={50}>
       <Grid xs={10}>
@@ -17,6 +19,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={0}
           y={0}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(0, 0, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -26,6 +29,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={1}
           y={0}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(1, 0, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -35,6 +39,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={2}
           y={0}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(2, 0, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -44,6 +49,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={3}
           y={0}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(3, 0, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -53,6 +59,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={4}
           y={0}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(4, 0, positions)}
         />
       </Grid>
 
@@ -63,6 +70,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={0}
           y={1}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(0, 1, positions)}
         />
       </Grid>
       <Grid xs={10}></Grid>
@@ -73,6 +81,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={2}
           y={1}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(2, 1, positions)}
         />
       </Grid>
       <Grid xs={10}></Grid>
@@ -83,6 +92,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={4}
           y={1}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(4, 1, positions)}
         />
       </Grid>
 
@@ -93,6 +103,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={0}
           y={2}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(0, 2, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -102,6 +113,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={1}
           y={2}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(1, 2, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -111,6 +123,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={2}
           y={2}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(2, 2, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -120,6 +133,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={3}
           y={2}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(3, 2, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -129,6 +143,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={4}
           y={2}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(4, 2, positions)}
         />
       </Grid>
 
@@ -139,6 +154,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={0}
           y={3}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(0, 3, positions)}
         />
       </Grid>
       <Grid xs={10}></Grid>
@@ -149,6 +165,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={2}
           y={3}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(2, 3, positions)}
         />
       </Grid>
       <Grid xs={10}></Grid>
@@ -159,6 +176,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={4}
           y={3}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(4, 3, positions)}
         />
       </Grid>
 
@@ -169,6 +187,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={0}
           y={4}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(0, 4, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -178,6 +197,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={1}
           y={4}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(1, 4, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -187,6 +207,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={2}
           y={4}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(2, 4, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -196,6 +217,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={3}
           y={4}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(3, 4, positions)}
         />
       </Grid>
       <Grid xs={10}>
@@ -205,6 +227,7 @@ export default function Board({ handleRoomClick }: BoardProps) {
           x={4}
           y={4}
           handleClick={handleRoomClick}
+          character={GetCharacterByPosition(4, 4, positions)}
         />
       </Grid>
     </Grid>

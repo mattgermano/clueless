@@ -15,7 +15,7 @@ import { Rooms, RoomSelections } from "./utils/rooms";
 import { Weapons, WeaponSelections } from "./utils/weapons";
 
 interface AccusationButtonProps {
-  handleAccusationClick: any;
+  handleAccusationClick(character: string, weapon: string, room: string): void;
 }
 
 export default function AccusationButton({

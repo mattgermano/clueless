@@ -6,16 +6,33 @@ import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
+import { PlayerPositions } from "@/components/utils/characters";
 import { Alert, Box, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
+interface EventObject {
+  type: string;
+  join?: string;
+  watch?: string;
+  positions?: PlayerPositions;
+  player?: string;
+  message?: string;
+}
+
 export default function Game() {
-  const [error, setError] = useState();
-  const [winner, setWinner] = useState();
-  const [joinId, setJoinId] = useState();
-  const [watchId, setWatchId] = useState();
+  const [error, setError] = useState("");
+  const [winner, setWinner] = useState("");
+  const [joinId, setJoinId] = useState("");
+  const [watchId, setWatchId] = useState("");
+  const [character, setCharacter] = useState<string | null | undefined>(
+    undefined,
+  );
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
+  const [characterPositions, setCharacterPositions] = useState<
+    PlayerPositions | undefined
+  >();
 
   const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
@@ -42,6 +59,7 @@ export default function Game() {
     if (joinId) {
       const event = {
         type: "move",
+        character: character,
         x: x,
         y: y,
         game: joinId,
@@ -95,9 +113,12 @@ export default function Game() {
       const searchParams = new URLSearchParams(document.location.search);
 
       if (searchParams.has("join")) {
+        setCharacter(searchParams.get("character"));
+
         // Player joining an existing game
         event = {
           type: "init",
+          character: searchParams.get("character"),
           join: searchParams.get("join"),
         };
       } else if (searchParams.has("watch")) {
@@ -108,8 +129,12 @@ export default function Game() {
         };
       } else {
         // First player starts a new game
+        const player = searchParams.get("character");
+        setCharacter(player);
+        setCharacterPositions({ [player as string]: { x: 0, y: 0 } });
         event = {
           type: "init",
+          character: player,
         };
       }
       console.log(
@@ -121,29 +146,34 @@ export default function Game() {
 
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
-    if (lastJsonMessage) {
+    if (
+      lastJsonMessage &&
+      typeof lastJsonMessage === "object" &&
+      "type" in lastJsonMessage
+    ) {
       console.log(
         `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
       );
 
-      const event: any = lastJsonMessage;
+      const event = lastJsonMessage as EventObject;
       switch (event.type) {
         case "init":
           // Create links for inviting other players and spectators
-          setJoinId(event.join);
-          setWatchId(event.watch);
+          if (event.join !== undefined) setJoinId(event.join);
+          if (event.watch !== undefined) setWatchId(event.watch);
           break;
 
         case "move":
-          // Update the UI with the move
+          setCharacterPositions(event.positions);
           break;
 
         case "win":
-          setWinner(event.player);
+          if (event.player !== undefined) setWinner(event.player);
           break;
 
         case "error":
-          setError(event.message);
+          if (event.message !== undefined) setError(event.message);
+          setOpenErrorSnackbar(true);
           break;
 
         default:
@@ -173,6 +203,10 @@ export default function Game() {
     setOpenSnackbar(false);
   };
 
+  const handleCloseErrorSnackbar = () => {
+    setOpenErrorSnackbar(false);
+  };
+
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
@@ -181,17 +215,17 @@ export default function Game() {
             className="absolute inset-0 pointer-events-none"
             quantity={50}
           />
-          <div className="mb-2">
+          <Alert className="mb-2 justify-center" severity="info">
             <span>The WebSocket is currently {connectionStatus}</span>
-          </div>
-          <div className="mb-2">
+          </Alert>
+          <Alert className="mb-2 justify-center" severity="info">
             {lastJsonMessage ? (
               <span>
                 Last message from server:{" "}
                 {JSON.stringify(lastJsonMessage, null, 2)}
               </span>
             ) : null}
-          </div>
+          </Alert>
           <Box
             sx={{
               display: "flex",
@@ -216,25 +250,35 @@ export default function Game() {
             )}
           </Box>
           <div className="mb-2 mt-2">
-            {error && (
-              <Alert className="justify-center" severity="error">
-                {error}
-              </Alert>
-            )}
-          </div>
-          <div className="mb-2 mt-2">
             {winner && (
               <Alert className="justify-center" severity="success">
                 {winner} has won the game!
               </Alert>
             )}
           </div>
-          <Board handleRoomClick={handleRoomClick} />
+          <Board
+            handleRoomClick={handleRoomClick}
+            positions={characterPositions}
+          />
           <div className="inline-flex mt-2 justify-center space-x-4">
             <SuggestionButton handleSuggestionClick={handleSuggestionClick} />
             <AccusationButton handleAccusationClick={handleAccusationClick} />
             <ClueSheet />
           </div>
+
+          <Snackbar
+            open={openErrorSnackbar}
+            autoHideDuration={3000}
+            onClose={handleCloseErrorSnackbar}
+          >
+            <Alert
+              onClose={handleCloseErrorSnackbar}
+              severity="error"
+              sx={{ width: "100%" }}
+            >
+              {error}
+            </Alert>
+          </Snackbar>
 
           <Snackbar
             open={openSnackbar}

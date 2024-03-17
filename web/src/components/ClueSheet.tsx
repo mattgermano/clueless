@@ -26,38 +26,95 @@ import { Characters } from "./utils/characters";
 import { Weapons } from "./utils/weapons";
 import { Rooms } from "./utils/rooms";
 
+interface SuspectCheckboxStates {
+  miss_scarlett: boolean[];
+  colonel_mustard: boolean[];
+  mrs_white: boolean[];
+  mr_green: boolean[];
+  mrs_peacock: boolean[];
+  professor_plum: boolean[];
+}
+
+interface WeaponCheckboxStates {
+  knife: boolean[];
+  candle_stick: boolean[];
+  revolver: boolean[];
+  rope: boolean[];
+  lead_pipe: boolean[];
+  wrench: boolean[];
+}
+
+interface RoomCheckboxStates {
+  ballroom: boolean[];
+  billiard_room: boolean[];
+  conservatory: boolean[];
+  dining_room: boolean[];
+  hall: boolean[];
+  kitchen: boolean[];
+  library: boolean[];
+  lounge: boolean[];
+  study: boolean[];
+}
+
+type Suspect =
+  | "miss_scarlett"
+  | "colonel_mustard"
+  | "mrs_white"
+  | "mr_green"
+  | "mrs_peacock"
+  | "professor_plum";
+
+type Weapon =
+  | "knife"
+  | "candle_stick"
+  | "revolver"
+  | "rope"
+  | "lead_pipe"
+  | "wrench";
+
+type Room =
+  | "ballroom"
+  | "billiard_room"
+  | "conservatory"
+  | "dining_room"
+  | "hall"
+  | "kitchen"
+  | "library"
+  | "lounge"
+  | "study";
+
 // prettier-ignore
 // TODO: consolidate these definitions with a loop
-const initialSuspectCheckboxStates: any = {
-  "miss_scarlett": [false, false, false, false, false, false, false],
-  "colonel_mustard": [false, false, false, false, false, false, false],
-  "mrs_white": [false, false, false, false, false, false, false],
-  "mr_green": [false, false, false, false, false, false, false],
-  "mrs_peacock": [false, false, false, false, false, false, false],
-  "professor_plum": [false, false, false, false, false, false, false],
+const initialSuspectCheckboxStates: SuspectCheckboxStates = {
+  "miss_scarlett": Array(7).fill(false),
+  "colonel_mustard": Array(7).fill(false),
+  "mrs_white": Array(7).fill(false),
+  "mr_green": Array(7).fill(false),
+  "mrs_peacock": Array(7).fill(false),
+  "professor_plum": Array(7).fill(false),
 }
 
 // prettier-ignore
-const initialWeaponCheckboxStates: any = {
-  "knife": [false, false, false, false, false, false, false],
-  "candle_stick": [false, false, false, false, false, false, false],
-  "revolver": [false, false, false, false, false, false, false],
-  "rope": [false, false, false, false, false, false, false],
-  "lead_pipe": [false, false, false, false, false, false, false],
-  "wrench": [false, false, false, false, false, false, false],
+const initialWeaponCheckboxStates: WeaponCheckboxStates = {
+  "knife": Array(7).fill(false),
+  "candle_stick": Array(7).fill(false),
+  "revolver": Array(7).fill(false),
+  "rope": Array(7).fill(false),
+  "lead_pipe": Array(7).fill(false),
+  "wrench": Array(7).fill(false),
 };
 
 // prettier-ignore
-const initialRoomCheckboxStates: any = {
-  "ballroom": [false, false, false, false, false, false, false],
-  "billiard_room": [false, false, false, false, false, false, false],
-  "conservatory": [false, false, false, false, false, false, false],
-  "dining_room": [false, false, false, false, false, false, false],
-  "hall": [false, false, false, false, false, false, false],
-  "kitchen": [false, false, false, false, false, false, false],
-  "library": [false, false, false, false, false, false, false],
-  "lounge": [false, false, false, false, false, false, false],
-  "study": [false, false, false, false, false, false, false],
+const initialRoomCheckboxStates: RoomCheckboxStates = {
+  "ballroom": Array(7).fill(false),
+  "billiard_room": Array(7).fill(false),
+  "conservatory": Array(7).fill(false),
+  "dining_room": Array(7).fill(false),
+  "hall": Array(7).fill(false),
+  "kitchen": Array(7).fill(false),
+  "library": Array(7).fill(false),
+  "lounge": Array(7).fill(false),
+  "study": Array(7).fill(false),
 };
 
 function a11yProps(index: number) {
@@ -114,30 +171,30 @@ export default function ClueCard() {
     setValue(newValue);
   };
 
-  const handleSuspectCheckboxChange = (id: string, column: Number) => {
+  const handleSuspectCheckboxChange = (id: Suspect, column: Number) => {
     const newData = { ...suspectCheckboxStates };
 
-    newData[id] = newData[id].map((item: string, itemIndex: Number) =>
+    newData[id] = newData[id].map((item: boolean, itemIndex: Number) =>
       itemIndex === column ? !item : item,
     );
 
     setSuspectCheckboxStates(newData);
   };
 
-  const handleWeaponCheckboxChange = (id: string, column: Number) => {
+  const handleWeaponCheckboxChange = (id: Weapon, column: Number) => {
     const newData = { ...weaponCheckboxStates };
 
-    newData[id] = newData[id].map((item: string, itemIndex: Number) =>
+    newData[id] = newData[id].map((item: boolean, itemIndex: Number) =>
       itemIndex === column ? !item : item,
     );
 
     setWeaponCheckboxStates(newData);
   };
 
-  const handleRoomCheckboxChange = (id: string, column: Number) => {
+  const handleRoomCheckboxChange = (id: Room, column: Number) => {
     const newData = { ...roomCheckboxStates };
 
-    newData[id] = newData[id].map((item: string, itemIndex: Number) =>
+    newData[id] = newData[id].map((item: boolean, itemIndex: Number) =>
       itemIndex === column ? !item : item,
     );
 
@@ -189,9 +246,16 @@ export default function ClueCard() {
                       {[...Array(7)].map((_, index) => (
                         <TableCell key={index} align="right">
                           <Checkbox
-                            checked={suspectCheckboxStates[character.id][index]}
+                            checked={
+                              suspectCheckboxStates[character.id as Suspect][
+                                index
+                              ]
+                            }
                             onChange={() =>
-                              handleSuspectCheckboxChange(character.id, index)
+                              handleSuspectCheckboxChange(
+                                character.id as Suspect,
+                                index,
+                              )
                             }
                           />
                         </TableCell>
@@ -231,9 +295,14 @@ export default function ClueCard() {
                       {[...Array(7)].map((_, index) => (
                         <TableCell key={index} align="right">
                           <Checkbox
-                            checked={weaponCheckboxStates[weapon.id][index]}
+                            checked={
+                              weaponCheckboxStates[weapon.id as Weapon][index]
+                            }
                             onChange={() =>
-                              handleWeaponCheckboxChange(weapon.id, index)
+                              handleWeaponCheckboxChange(
+                                weapon.id as Weapon,
+                                index,
+                              )
                             }
                           />
                         </TableCell>
@@ -273,9 +342,9 @@ export default function ClueCard() {
                       {[...Array(7)].map((_, index) => (
                         <TableCell key={index} align="right">
                           <Checkbox
-                            checked={roomCheckboxStates[room.id][index]}
+                            checked={roomCheckboxStates[room.id as Room][index]}
                             onChange={() =>
-                              handleRoomCheckboxChange(room.id, index)
+                              handleRoomCheckboxChange(room.id as Room, index)
                             }
                           />
                         </TableCell>

@@ -5,6 +5,18 @@ export interface Character {
   image: string;
 }
 
+export interface PlayerPositions {
+  [player: string]: {
+    x: number;
+    y: number;
+  };
+}
+
+interface Position {
+  x: number;
+  y: number;
+}
+
 export const Characters = [
   {
     id: "miss_scarlett",
@@ -58,3 +70,31 @@ export const CharacterSelections = Characters.map((character) => (
     </Box>
   </MenuItem>
 ));
+
+export function GetCharacterById(id: string) {
+  for (const character of Characters) {
+    if (character.id === id) {
+      return character;
+    }
+  }
+
+  return undefined;
+}
+
+export function GetCharacterByPosition(
+  x: Number,
+  y: Number,
+  positions?: PlayerPositions,
+) {
+  let character = undefined;
+
+  if (positions) {
+    Object.entries(positions).forEach(([player, value]: [string, Position]) => {
+      if (x === value.x && y === value.y) {
+        character = GetCharacterById(player);
+      }
+    });
+  }
+
+  return character;
+}

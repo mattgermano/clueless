@@ -7,7 +7,7 @@ interface SquareProps {
   image: string;
   x: Number;
   y: Number;
-  handleClick?: any;
+  handleClick(x: Number, y: Number): void;
   width?: number;
   height?: number;
   character?: Character;

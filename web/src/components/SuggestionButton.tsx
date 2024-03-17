@@ -14,7 +14,7 @@ import { Characters, CharacterSelections } from "./utils/characters";
 import { Weapons, WeaponSelections } from "./utils/weapons";
 
 interface SuggestionButtonProps {
-  handleSuggestionClick: any;
+  handleSuggestionClick(character: string, weapon: string, room: string): void;
 }
 
 export default function SuggestionButton({
@@ -71,7 +71,8 @@ export default function SuggestionButton({
           <Button
             variant="contained"
             onClick={() => {
-              handleSuggestionClick(character, weapon);
+              // TODO: Update room with current players room
+              handleSuggestionClick(character, weapon, "study");
               handleClose();
             }}
           >

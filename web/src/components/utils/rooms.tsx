@@ -1,5 +1,4 @@
 import { Avatar, Box, ListItemText, MenuItem } from "@mui/material";
-import Image from "next/image";
 
 export interface Room {
   name: string;

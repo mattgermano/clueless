@@ -93,7 +93,7 @@ export default function StartGameButton() {
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Link
-            href={`/game?character=${character}?player_count=${playerCount}`}
+            href={`/game?character=${character}&player_count=${playerCount}`}
           >
             <Button variant="contained">Start</Button>
           </Link>

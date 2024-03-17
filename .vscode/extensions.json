@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-python.python",
+    "ms-python.mypy-type-checker",
+    "njpwerner.autodocstring",
+    "charliermarsh.ruff",
+  ]
+}

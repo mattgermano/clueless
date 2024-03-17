@@ -1,20 +1,34 @@
-import Board from "@/components/Board";
 import CharacterPortrait from "@/components/CharacterPortrait";
 import StartGameButton from "@/components/StartGameButton";
 import JoinGameButton from "@/components/JoinGameButton";
 import Particles from "@/components/Particles";
 import RulesButton from "@/components/RulesButton";
-import { Avatar } from "@mui/material";
 import { Characters } from "@/components/utils/characters";
+import React from "react";
 
 export default function Home() {
-  const characterPortraits = Characters.map((character) => (
-    <CharacterPortrait
-      key={character.name}
-      title={character.name}
-      image={character.image}
-    />
-  ));
+  const characterPortraits = Characters.map((character) => {
+    if (character.id === "mrs_white") {
+      return (
+        <React.Fragment key={character.id}>
+          <CharacterPortrait title={character.name} image={character.image} />
+          <CharacterPortrait
+            key={`${character.id}-logo`}
+            title="Clue-Less"
+            image="/logo.webp"
+          />
+        </React.Fragment>
+      );
+    } else {
+      return (
+        <CharacterPortrait
+          key={character.id}
+          title={character.name}
+          image={character.image}
+        />
+      );
+    }
+  });
 
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
