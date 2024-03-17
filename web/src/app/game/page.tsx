@@ -1,17 +1,40 @@
 "use client";
 
+import AccusationButton from "@/components/AccusationButton";
 import Board from "@/components/Board";
+import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
-import { Alert, Link } from "@mui/material";
+import SuggestionButton from "@/components/SuggestionButton";
+import TextWithCopyButton from "@/components/TextWithCopyButton";
+import { PlayerPositions } from "@/components/utils/characters";
+import { Alert, Box, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
-export default function Game() {
-  const [error, setError] = useState();
-  const [joinId, setJoinId] = useState();
-  const [watchId, setWatchId] = useState();
+interface EventObject {
+  type: string;
+  join?: string;
+  watch?: string;
+  positions?: PlayerPositions;
+  player?: string;
+  message?: string;
+}
 
-  const WS_URL = "ws://127.0.0.1:8000/ws/hello-django";
+export default function Game() {
+  const [error, setError] = useState("");
+  const [winner, setWinner] = useState("");
+  const [joinId, setJoinId] = useState("");
+  const [watchId, setWatchId] = useState("");
+  const [character, setCharacter] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
+  const [characterPositions, setCharacterPositions] = useState<
+    PlayerPositions | undefined
+  >();
+
+  const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {
@@ -23,9 +46,9 @@ export default function Game() {
   function getWebSocketServer() {
     if (window.location.host === "clueless.cassini.dev") {
       // TODO: Update with production server once deployed
-      return "ws://127.0.0.1:8000/ws/hello-django";
+      return "ws://127.0.0.1:8000/ws/clueless";
     } else if (window.location.host === "localhost:3000") {
-      return "ws://127.0.0.1:8000/ws/hello-django";
+      return "ws://127.0.0.1:8000/ws/clueless";
     } else {
       throw new Error(`Unsupported host: ${window.location.host}`);
     }
@@ -36,8 +59,45 @@ export default function Game() {
     if (joinId) {
       const event = {
         type: "move",
+        character: character,
         x: x,
         y: y,
+        game: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleSuggestionClick(
+    suspect: string,
+    weapon: string,
+    room: string,
+  ) {
+    if (joinId) {
+      const event = {
+        type: "suggestion",
+        suspect: suspect,
+        weapon: weapon,
+        room: room,
+        game: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleAccusationClick(
+    suspect: string,
+    weapon: string,
+    room: string,
+  ) {
+    if (joinId) {
+      const event = {
+        type: "accusation",
+        suspect: suspect,
+        weapon: weapon,
+        room: room,
         game: joinId,
       };
 
@@ -53,9 +113,12 @@ export default function Game() {
       const searchParams = new URLSearchParams(document.location.search);
 
       if (searchParams.has("join")) {
+        setCharacter(searchParams.get("character"));
+
         // Player joining an existing game
         event = {
           type: "init",
+          character: searchParams.get("character"),
           join: searchParams.get("join"),
         };
       } else if (searchParams.has("watch")) {
@@ -66,37 +129,51 @@ export default function Game() {
         };
       } else {
         // First player starts a new game
+        const player = searchParams.get("character");
+        setCharacter(player);
+        setCharacterPositions({ [player as string]: { x: 0, y: 0 } });
         event = {
           type: "init",
+          character: player,
         };
       }
-      console.log(JSON.stringify(event));
+      console.log(
+        `Sending event to backend: ${JSON.stringify(event, null, 2)}`,
+      );
       sendJsonMessage(event);
     }
   }, [readyState, sendJsonMessage]);
 
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
-    if (lastJsonMessage) {
-      console.log(`Got a new message: ${JSON.stringify(lastJsonMessage)}`);
+    if (
+      lastJsonMessage &&
+      typeof lastJsonMessage === "object" &&
+      "type" in lastJsonMessage
+    ) {
+      console.log(
+        `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
+      );
 
-      const event: any = lastJsonMessage;
+      const event = lastJsonMessage as EventObject;
       switch (event.type) {
         case "init":
           // Create links for inviting other players and spectators
-          setJoinId(event.join);
-          setWatchId(event.watch);
+          if (event.join !== undefined) setJoinId(event.join);
+          if (event.watch !== undefined) setWatchId(event.watch);
           break;
 
         case "move":
-          // Update the UI with the move
+          setCharacterPositions(event.positions);
           break;
 
         case "win":
+          if (event.player !== undefined) setWinner(event.player);
           break;
 
         case "error":
-          setError(event.message);
+          if (event.message !== undefined) setError(event.message);
+          setOpenErrorSnackbar(true);
           break;
 
         default:
@@ -113,6 +190,23 @@ export default function Game() {
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setOpenSnackbar(true);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
+  const handleCloseErrorSnackbar = () => {
+    setOpenErrorSnackbar(false);
+  };
+
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
@@ -121,36 +215,84 @@ export default function Game() {
             className="absolute inset-0 pointer-events-none"
             quantity={50}
           />
-          <div className="mb-2">
+          <Alert className="mb-2 justify-center" severity="info">
             <span>The WebSocket is currently {connectionStatus}</span>
-          </div>
-          <div className="mb-2">
+          </Alert>
+          <Alert className="mb-2 justify-center" severity="info">
             {lastJsonMessage ? (
-              <span>Last message: {JSON.stringify(lastJsonMessage)}</span>
+              <span>
+                Last message from server:{" "}
+                {JSON.stringify(lastJsonMessage, null, 2)}
+              </span>
             ) : null}
-          </div>
-          <div>
+          </Alert>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             {joinId && (
-              <Link href={`http://localhost:3000/game?join=${joinId}`}>
-                Join Game Link
-              </Link>
+              <TextWithCopyButton
+                title="Join Game ID:"
+                text={joinId}
+                handleCopy={handleCopy}
+              />
             )}
-          </div>
-          <div>
             {watchId && (
-              <Link href={`http://localhost:3000/game?watch=${watchId}`}>
-                Watch Game Link
-              </Link>
+              <TextWithCopyButton
+                title="Watch Game ID:"
+                text={watchId}
+                handleCopy={handleCopy}
+              />
             )}
-          </div>
+          </Box>
           <div className="mb-2 mt-2">
-            {error && (
-              <Alert className="justify-center" severity="error">
-                {error}
+            {winner && (
+              <Alert className="justify-center" severity="success">
+                {winner} has won the game!
               </Alert>
             )}
           </div>
-          <Board handleRoomClick={handleRoomClick} />
+          <Board
+            handleRoomClick={handleRoomClick}
+            positions={characterPositions}
+          />
+          <div className="inline-flex mt-2 justify-center space-x-4">
+            <SuggestionButton handleSuggestionClick={handleSuggestionClick} />
+            <AccusationButton handleAccusationClick={handleAccusationClick} />
+            <ClueSheet />
+          </div>
+
+          <Snackbar
+            open={openErrorSnackbar}
+            autoHideDuration={3000}
+            onClose={handleCloseErrorSnackbar}
+          >
+            <Alert
+              onClose={handleCloseErrorSnackbar}
+              severity="error"
+              sx={{ width: "100%" }}
+            >
+              {error}
+            </Alert>
+          </Snackbar>
+
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000}
+            onClose={handleCloseSnackbar}
+          >
+            <Alert
+              onClose={handleCloseSnackbar}
+              severity="success"
+              sx={{ width: "100%" }}
+            >
+              Text copied to clipboard!
+            </Alert>
+          </Snackbar>
         </div>
       </div>
     </main>

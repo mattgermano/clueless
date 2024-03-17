@@ -7,15 +7,25 @@
   "settings": {
     // JavaScript/TypeScript/JSX/TSX/JSON language configuration
     "[javascript][typescript][typescriptreact][javascriptreact][json]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
+      // Use prettier formatter
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit",
+      }
     },
     // Python language configuration
     "[python]": {
-      "editor.defaultFormatter": "charliermarsh.ruff"
+      // Use black formatter built-in to Ruff
+      "editor.defaultFormatter": "charliermarsh.ruff",
+      // Automatically fix linting errors and sort imports on save using Ruff
+      "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+      },
     },
     "files.eol": "\n",
     "editor.formatOnSave": true,
-    "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,

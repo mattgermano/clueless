@@ -1,4 +1,4 @@
-import { Avatar, Tooltip } from "@mui/material";
+import { Avatar, Box, Tooltip } from "@mui/material";
 
 interface CharacterPortraitProps {
   title: string;
@@ -18,7 +18,11 @@ export default function CharacterPortrait({
       <Avatar
         alt={title}
         src={image}
-        sx={{ width: { width }, height: { height } }}
+        sx={{
+          width: { width },
+          height: { height },
+          border: "3px solid white",
+        }}
       />
     </Tooltip>
   );
