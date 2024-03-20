@@ -24,12 +24,12 @@ clue_cards = {
 }
 
 character_positions = {
-    "miss_scarlett": (0, 0),
-    "colonel_mustard": (0, 0),
-    "mrs_white": (0, 0),
-    "mr_green": (0, 0),
-    "mrs_peacock": (0, 0),
-    "professor_plum": (0, 0),
+    "miss_scarlett": (3, 0),
+    "colonel_mustard": (4, 1),
+    "mrs_white": (3, 4),
+    "mr_green": (1, 4),
+    "mrs_peacock": (0, 3),
+    "professor_plum": (0, 1),
 }
 
 

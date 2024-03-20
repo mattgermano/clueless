@@ -6,7 +6,10 @@ import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
-import { PlayerPositions } from "@/components/utils/characters";
+import {
+  GetCharacterById,
+  CharacterPositions,
+} from "@/components/utils/characters";
 import { Alert, Box, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
@@ -15,7 +18,7 @@ interface EventObject {
   type: string;
   join?: string;
   watch?: string;
-  positions?: PlayerPositions;
+  positions?: CharacterPositions;
   player?: string;
   message?: string;
 }
@@ -31,7 +34,7 @@ export default function Game() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [characterPositions, setCharacterPositions] = useState<
-    PlayerPositions | undefined
+    CharacterPositions | undefined
   >();
 
   const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
@@ -113,7 +116,15 @@ export default function Game() {
       const searchParams = new URLSearchParams(document.location.search);
 
       if (searchParams.has("join")) {
-        setCharacter(searchParams.get("character"));
+        const player = searchParams.get("character");
+
+        setCharacter(player);
+        setCharacterPositions({
+          [player as string]: {
+            x: GetCharacterById(player as string).starting_position.x,
+            y: GetCharacterById(player as string).starting_position.y,
+          },
+        });
 
         // Player joining an existing game
         event = {
@@ -131,7 +142,12 @@ export default function Game() {
         // First player starts a new game
         const player = searchParams.get("character");
         setCharacter(player);
-        setCharacterPositions({ [player as string]: { x: 0, y: 0 } });
+        setCharacterPositions({
+          [player as string]: {
+            x: GetCharacterById(player as string).starting_position.x,
+            y: GetCharacterById(player as string).starting_position.y,
+          },
+        });
         event = {
           type: "init",
           character: player,
@@ -258,7 +274,7 @@ export default function Game() {
           </div>
           <Board
             handleRoomClick={handleRoomClick}
-            positions={characterPositions}
+            characterPositions={characterPositions}
           />
           <div className="inline-flex mt-2 justify-center space-x-4">
             <SuggestionButton handleSuggestionClick={handleSuggestionClick} />

@@ -9,16 +9,11 @@ import {
   DialogTitle,
   FormControl,
   InputLabel,
-  ListItemText,
   MenuItem,
   Select,
   SelectChangeEvent,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
 } from "@mui/material";
 import { useState } from "react";
-import CharacterPortrait from "@/components/CharacterPortrait";
 import { CharacterSelections, Characters } from "@/components/utils/characters";
 import Link from "next/link";
 
