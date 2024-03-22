@@ -1,6 +1,6 @@
 import random
 
-clue_cards = {
+clue_cards: dict[str, list[str]] = {
     "suspects": [
         "miss_scarlett",
         "colonel_mustard",
@@ -23,7 +23,7 @@ clue_cards = {
     ],
 }
 
-character_positions = {
+character_positions: dict[str, tuple] = {
     "miss_scarlett": (3, 0),
     "colonel_mustard": (4, 1),
     "mrs_white": (3, 4),
@@ -35,7 +35,7 @@ character_positions = {
 
 class Clueless:
     """
-    A Clue-Less game
+    A Clue-Less game instance
     """
 
     def __init__(self):

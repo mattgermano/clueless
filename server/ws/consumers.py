@@ -1,51 +1,87 @@
+"""WebSocket server that accepts game connections from clients and processes events"""
+
 import json
 import secrets
 
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 
 from . import clueless
 
-JOIN = {}
-WATCH = {}
+JOIN_GAMES = {}
+WATCH_GAMES = {}
 
 
-class CluelessConsumer(WebsocketConsumer):
-    def connect(self):
-        self.accept()
+class CluelessConsumer(AsyncWebsocketConsumer):
+    async def connect(self) -> None:
+        """Accepts client connections"""
+        await self.accept()
 
-    def disconnect(self, close_code):
-        pass
+    async def disconnect(self, close_code) -> None:
+        """Disconnects clients from the channel"""
+        for game_id in JOIN_GAMES.keys():
+            await self.channel_layer.group_discard(game_id, self.channel_name)
 
-    def error(self, message: str) -> None:
+    async def error(self, error: str) -> None:
         """Sends an error message to the client
 
         Parameters
         ----------
-        message : str
-            The error message
+        error : str
+            The error message to send
         """
-        event = {"type": "error", "message": message}
-        self.send(json.dumps(event))
+        event = {"type": "error", "message": error}
+        await self.send(json.dumps(event))
 
-    def start(self, character: str) -> None:
+    async def broadcast_positions(self, game_id: str) -> None:
+        """Sends the current position of characters in a game to all connected clients
+
+        Parameters
+        ----------
+        game_id : str
+            The game to broadcast positions for
+        """
+        try:
+            game: clueless.Clueless = JOIN_GAMES[game_id]
+        except KeyError:
+            await self.error(f"Game with ID {game_id} not found!")
+            return
+
+        positions = game.get_character_positions()
+        event = {
+            "type": "move",
+            "positions": {},
+        }
+
+        for character, position in positions.items():
+            if character in game.get_characters():
+                event["positions"][character] = {"x": position[0], "y": position[1]}
+
+        await self.channel_layer.group_send(
+            game_id, {"type": "game_event", "message": json.dumps(event)}
+        )
+
+    async def start(self, event) -> None:
         """
         Handles a connection from the first player and starts a new game
 
         Parameters
         ----------
-        character: str
-            The character starting the game
+        event: str
+            The start game event
         """
 
-        # Initialize a Clueless game
+        # Create a game instance
         game: clueless.Clueless = clueless.Clueless()
-        game.add_character(character)
+        game.add_character(event["character"])
 
         join_key = secrets.token_urlsafe(12)
-        JOIN[join_key] = game
+        JOIN_GAMES[join_key] = game
 
         watch_key = secrets.token_urlsafe(12)
-        WATCH[watch_key] = game
+        WATCH_GAMES[watch_key] = game
+
+        # Add the player to a new channel group
+        await self.channel_layer.group_add(join_key, self.channel_name)
 
         # Send the access token to the browser of the first player
         event = {
@@ -53,98 +89,120 @@ class CluelessConsumer(WebsocketConsumer):
             "join": join_key,
             "watch": watch_key,
         }
-        self.send(json.dumps(event))
+        await self.send(text_data=json.dumps(event))
 
-    def join(self, join_key, character: str) -> None:
-        """Handles a connection for subsequent players to join an existing game
+    async def join(self, event) -> None:
+        """Handles a connection for subsequent players that join an existing game
 
         Parameters
         ----------
-        join_key : str
-            The unique identifier of the game to join
-
-        character: str
-            The character that joined the game
+        event
+            The join game event
         """
 
         # Find the Clueless game
         try:
-            game = clueless.Clueless = JOIN[join_key]
-            game.add_character(character)
+            game: clueless.Clueless = JOIN_GAMES[event["join"]]
+            game.add_character(event["character"])
         except KeyError:
-            self.error(f"Game with ID {join_key} not found!")
+            await self.error(f"Game with ID {event["join"]} not found!")
+            return
 
-    def watch(self, watch_key: str) -> None:
+        # Add the player to the channel group
+        await self.channel_layer.group_add(event["join"], self.channel_name)
+
+        # Send a "move" event to update the UI for connected clients
+        await self.broadcast_positions(event["join"])
+
+    async def watch(self, event) -> None:
         """Handles a connection for spectators joining an existing game
 
         Parameters
         ----------
-        watch_key : str
-            The unique identifier of the game to spectate
+        event
+            The watch game event
         """
 
         try:
-            WATCH[watch_key]
+            self.WATCH_GAMES[event["watch"]]
         except KeyError:
-            self.error(f"Game with ID {watch_key} not found!")
-
-    def move(self, game_id: str, character: str, x, y) -> None:
-        game: clueless.Clueless = JOIN[game_id]
-        try:
-            # Play the move
-            game.move(character, x, y)
-        except RuntimeError as exc:
-            # Send an "error" event if the move was illegal
-            self.error(str(exc))
+            await self.error(f"Game with ID {event["watch"]} not found!")
             return
 
-        # Send a "move" event to update the UI.
-        updated_positions = game.get_character_positions()
-        event = {
-            "type": "move",
-            "positions": {},
-        }
-        for character, position in updated_positions.items():
-            if character in game.get_characters():
-                event["positions"][character] = {"x": position[0], "y": position[1]}
+    async def move(self, event) -> None:
+        """Processes a move event
 
-        # TODO: Update this to broadcast to all connected clients
-        self.send(json.dumps(event))
+        Parameters
+        ----------
+        event
+            The move event
+        """
+        try:
+            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+        except KeyError:
+            await self.error(f"Game with ID {event["join"]} not found!")
+            return
 
-    def suggest(self, game_id, suspect, weapon, room):
-        game: clueless.Clueless = JOIN[game_id]
+        try:
+            # Play the move
+            game.move(event["character"], event["x"], event["y"])
+        except RuntimeError as exc:
+            # Send an "error" event if the move was illegal
+            await self.error(str(exc))
+            return
+
+        # Send a "move" event to update the UI
+        await self.broadcast_positions(event["game"])
+
+    async def suggest(self, event):
+        """Processes a suggestion event
+
+        Parameters
+        ----------
+        event
+            The suggestion event
+        """
+        try:
+            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+        except KeyError:
+            await self.error(f"Game with ID {event["join"]} not found!")
+            return
+
         try:
             # Make the suggestion
-            game.suggest(suspect, weapon)
+            game.suggest(event["suspect"], event["weapon"])
         except RuntimeError as exc:
-            self.error(str(exc))
+            await self.error(str(exc))
 
-    def accuse(self, game_id: str, suspect: str, weapon: str, room: str) -> None:
+    async def accuse(self, event) -> None:
         """Processes an accusation event
 
         Parameters
         ----------
-        game_id : str
-            The game instance
-        suspect : str
-            The suspect to accuse
-        weapon : str
-            The weapon used
-        room : str
-            The room
+        event
+            The accusation event
         """
-        game: clueless.Clueless = JOIN[game_id]
+        try:
+            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+        except KeyError:
+            await self.error(f"Game with ID {event["game"]} not found!")
+            return
+
         try:
             # Make the accusation
-            game.accuse(suspect, weapon, room)
+            game.accuse(event["suspect"], event["weapon"], event["room"])
 
             if game.winner is not None:
-                event = {"type": "win", "player": game.winner}
-                self.send(json.dumps(event))
-        except RuntimeError as exc:
-            self.error(str(exc))
+                win_event = {"type": "win", "player": game.winner}
+                await self.channel_layer.group_send(
+                    event["game"],
+                    {"type": "game_event", "message": json.dumps(win_event)},
+                )
 
-    def receive(self, text_data):
+        except RuntimeError as exc:
+            await self.error(str(exc))
+
+    async def receive(self, text_data):
         """Receives a message from the Websocket
 
         Parameters
@@ -160,19 +218,29 @@ class CluelessConsumer(WebsocketConsumer):
         if event["type"] == "init":
             if "join" in event:
                 # Players join an existing game
-                self.join(event["join"], event["character"])
+                await self.join(event)
             elif "watch" in event:
                 # Spectators watch an existing game
-                self.watch(event["watch"])
+                await self.watch(event)
             else:
                 # First player starts a new game
-                self.start(event["character"])
+                await self.start(event)
         elif event["type"] == "move":
-            self.move(event["game"], event["character"], event["x"], event["y"])
+            await self.move(event)
         elif event["type"] == "suggestion":
-            # self.suggest(event["game"], event["suspect"], event["weapon"], event["room"])
+            # await self.suggest(event)
             pass
         elif event["type"] == "accusation":
-            self.accuse(event["game"], event["suspect"], event["weapon"], event["room"])
+            await self.accuse(event)
+        elif event["type"] == "query_id":
+            if event["id"] not in JOIN_GAMES:
+                await self.error("Invalid game ID!")
         else:
-            self.error("Received invalid event!")
+            await self.error("Received invalid event!")
+
+    # Receive message from room group
+    async def game_event(self, event):
+        message = event["message"]
+
+        # Send message to WebSocket
+        await self.send(text_data=message)
