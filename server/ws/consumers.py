@@ -128,7 +128,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             except RuntimeError as exc:
                 await self.error(str(exc))
         except KeyError:
-            await self.error(f"Game with ID {event["join"]} not found!")
+            await self.error("Game with ID {} not found!".format(event["join"]))
             return
 
         # Add the player to the channel group
@@ -150,7 +150,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         try:
             game = WATCH_GAMES[event["watch"]]
         except KeyError:
-            await self.error(f"Game with ID {event["watch"]} not found!")
+            await self.error("Game with ID {} not found!".format(event["watch"]))
             return
 
         await self.channel_layer.group_add(game.get_id(), self.channel_name)
@@ -169,7 +169,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         try:
             game = JOIN_GAMES[event["game"]]
         except KeyError:
-            await self.error(f"Game with ID {event["join"]} not found!")
+            await self.error("Game with ID {} not found!".format(event["game"]))
             return
 
         try:
@@ -196,7 +196,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         try:
             game = JOIN_GAMES[event["game"]]
         except KeyError:
-            await self.error(f"Game with ID {event["join"]} not found!")
+            await self.error("Game with ID {} not found!".format(event["game"]))
             return
 
         try:
@@ -218,7 +218,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         try:
             game = JOIN_GAMES[event["game"]]
         except KeyError:
-            await self.error(f"Game with ID {event["game"]} not found!")
+            await self.error("Game with ID {} not found!".format(event["game"]))
             return
 
         try:
@@ -298,7 +298,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Get the handler based on the event type
         handler = event_handlers.get(
             event["type"],
-            lambda e: self.error(f"Received invalid event with type {e["type"]}!"),
+            lambda e: self.error(
+                "Received invalid event with type {}!".format(e["type"])
+            ),
         )
 
         if callable(handler):
