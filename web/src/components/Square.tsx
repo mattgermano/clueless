@@ -27,8 +27,39 @@ export default function Square({
   width = 500,
   height = 500,
 }: SquareProps) {
+  function getClasses() {
+    if (y === 0) {
+      return "items-end justify-center";
+    } else if (y === 6) {
+      return "items-start justify-center";
+    } else if (x === 6) {
+      return "items-center justify-start";
+    } else if (x === 0) {
+      return "items-center justify-end";
+    }
+  }
+
+  const classes = getClasses();
+
   return (
     <>
+      {title.length === 0 && (
+        <div className={`relative min-h-[130px] flex ${classes}`}>
+          {characters &&
+            characters.map((character) => {
+              return (
+                <div key={character.id} className={`absolute`}>
+                  <ImagePortrait
+                    title={character.name}
+                    image={character.image}
+                    width={70}
+                    height={70}
+                  />
+                </div>
+              );
+            })}
+        </div>
+      )}
       {title.length > 0 && (
         <Button variant="outlined" onClick={() => handleClick(x, y)}>
           <Tooltip title={title}>
@@ -43,7 +74,6 @@ export default function Square({
 
               {characters &&
                 characters.map((character, index) => {
-                  // -left-14 top-12
                   let position = "";
                   if (index === 0) {
                     position = "left-0 top-0";

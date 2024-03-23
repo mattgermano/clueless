@@ -2,6 +2,8 @@
 
 import json
 import secrets
+from functools import wraps
+from typing import Any, Callable, Dict, List
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -9,6 +11,22 @@ from . import clueless
 
 JOIN_GAMES = {}
 WATCH_GAMES = {}
+
+
+def require_keys(required_keys: List[str]):
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(self, event):
+            missing_keys = [key for key in required_keys if key not in event]
+            if missing_keys:
+                missing_keys_str = ", ".join(missing_keys)
+                await self.error(f"Missing required keys in event: {missing_keys_str}")
+                return
+            return await func(self, event)
+
+        return wrapper
+
+    return decorator
 
 
 class CluelessConsumer(AsyncWebsocketConsumer):
@@ -41,7 +59,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             The game to broadcast positions for
         """
         try:
-            game: clueless.Clueless = JOIN_GAMES[game_id]
+            game = JOIN_GAMES[game_id]
         except KeyError:
             await self.error(f"Game with ID {game_id} not found!")
             return
@@ -60,7 +78,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             game_id, {"type": "game_event", "message": json.dumps(event)}
         )
 
-    async def start(self, event) -> None:
+    @require_keys(["character", "player_count"])
+    async def start(self, event: Dict[str, str]) -> None:
         """
         Handles a connection from the first player and starts a new game
 
@@ -69,15 +88,14 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event: str
             The start game event
         """
+        join_key = secrets.token_urlsafe(12)
+        watch_key = secrets.token_urlsafe(12)
 
         # Create a game instance
-        game: clueless.Clueless = clueless.Clueless()
+        game = clueless.Clueless(join_key, int(event["player_count"]))
         game.add_character(event["character"])
 
-        join_key = secrets.token_urlsafe(12)
         JOIN_GAMES[join_key] = game
-
-        watch_key = secrets.token_urlsafe(12)
         WATCH_GAMES[watch_key] = game
 
         # Add the player to a new channel group
@@ -90,8 +108,10 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "watch": watch_key,
         }
         await self.send(text_data=json.dumps(event))
+        await self.broadcast_positions(join_key)
 
-    async def join(self, event) -> None:
+    @require_keys(["join"])
+    async def join(self, event: Dict[str, str]) -> None:
         """Handles a connection for subsequent players that join an existing game
 
         Parameters
@@ -102,8 +122,11 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         # Find the Clueless game
         try:
-            game: clueless.Clueless = JOIN_GAMES[event["join"]]
-            game.add_character(event["character"])
+            game = JOIN_GAMES[event["join"]]
+            try:
+                game.add_character(event["character"])
+            except RuntimeError as exc:
+                await self.error(str(exc))
         except KeyError:
             await self.error(f"Game with ID {event["join"]} not found!")
             return
@@ -114,7 +137,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Send a "move" event to update the UI for connected clients
         await self.broadcast_positions(event["join"])
 
-    async def watch(self, event) -> None:
+    @require_keys(["watch"])
+    async def watch(self, event: Dict[str, str]) -> None:
         """Handles a connection for spectators joining an existing game
 
         Parameters
@@ -124,12 +148,16 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         """
 
         try:
-            self.WATCH_GAMES[event["watch"]]
+            game = WATCH_GAMES[event["watch"]]
         except KeyError:
             await self.error(f"Game with ID {event["watch"]} not found!")
             return
 
-    async def move(self, event) -> None:
+        await self.channel_layer.group_add(game.get_id(), self.channel_name)
+        await self.broadcast_positions(game.get_id())
+
+    @require_keys(["game", "character", "x", "y"])
+    async def move(self, event: Dict[str, Any]) -> None:
         """Processes a move event
 
         Parameters
@@ -137,8 +165,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event
             The move event
         """
+
         try:
-            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+            game = JOIN_GAMES[event["game"]]
         except KeyError:
             await self.error(f"Game with ID {event["join"]} not found!")
             return
@@ -154,7 +183,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Send a "move" event to update the UI
         await self.broadcast_positions(event["game"])
 
-    async def suggest(self, event):
+    @require_keys(["game", "suspect", "weapon", "room"])
+    async def suggest(self, event: Dict[str, str]):
         """Processes a suggestion event
 
         Parameters
@@ -162,8 +192,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event
             The suggestion event
         """
+
         try:
-            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+            game = JOIN_GAMES[event["game"]]
         except KeyError:
             await self.error(f"Game with ID {event["join"]} not found!")
             return
@@ -174,7 +205,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         except RuntimeError as exc:
             await self.error(str(exc))
 
-    async def accuse(self, event) -> None:
+    @require_keys(["game", "suspect", "weapon", "room"])
+    async def accuse(self, event: Dict[str, str]) -> None:
         """Processes an accusation event
 
         Parameters
@@ -182,8 +214,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event
             The accusation event
         """
+
         try:
-            game: clueless.Clueless = JOIN_GAMES[event["game"]]
+            game = JOIN_GAMES[event["game"]]
         except KeyError:
             await self.error(f"Game with ID {event["game"]} not found!")
             return
@@ -202,6 +235,40 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         except RuntimeError as exc:
             await self.error(str(exc))
 
+    @require_keys(["id"])
+    async def query_game(self, event: Dict[str, str]):
+        valid = False
+
+        if event["id"] in JOIN_GAMES:
+            game = JOIN_GAMES[event["id"]]
+            spectator = False
+            valid = True
+        elif event["id"] in WATCH_GAMES:
+            game = WATCH_GAMES[event["id"]]
+            spectator = True
+            valid = True
+        else:
+            return
+
+        query_game_event = {
+            "type": "query_game",
+            "valid": valid,
+            "characters": game.get_available_characters(),
+            "spectator": spectator,
+        }
+        await self.send(json.dumps(query_game_event))
+
+    async def handle_init(self, event: Dict[str, str]):
+        if "join" in event:
+            # Players join an existing game
+            await self.join(event)
+        elif "watch" in event:
+            # Spectators watch an existing game
+            await self.watch(event)
+        else:
+            # First player starts a new game
+            await self.start(event)
+
     async def receive(self, text_data):
         """Receives a message from the Websocket
 
@@ -215,28 +282,27 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         print(f"Received event from frontend: {event_formatted}\n")
 
-        if event["type"] == "init":
-            if "join" in event:
-                # Players join an existing game
-                await self.join(event)
-            elif "watch" in event:
-                # Spectators watch an existing game
-                await self.watch(event)
-            else:
-                # First player starts a new game
-                await self.start(event)
-        elif event["type"] == "move":
-            await self.move(event)
-        elif event["type"] == "suggestion":
-            # await self.suggest(event)
-            pass
-        elif event["type"] == "accusation":
-            await self.accuse(event)
-        elif event["type"] == "query_id":
-            if event["id"] not in JOIN_GAMES:
-                await self.error("Invalid game ID!")
-        else:
-            await self.error("Received invalid event!")
+        if "type" not in event:
+            await self.error("Received event without a type!")
+            return
+
+        # Define a dispatch table
+        event_handlers = {
+            "init": self.handle_init,
+            "move": self.move,
+            "suggestion": self.suggest,
+            "accusation": self.accuse,
+            "query_game": self.query_game,
+        }
+
+        # Get the handler based on the event type
+        handler = event_handlers.get(
+            event["type"],
+            lambda e: self.error(f"Received invalid event with type {e["type"]}!"),
+        )
+
+        if callable(handler):
+            await handler(event)
 
     # Receive message from room group
     async def game_event(self, event):

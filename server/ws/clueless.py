@@ -1,6 +1,8 @@
 import random
+from copy import deepcopy
+from typing import Dict, List, Tuple
 
-clue_cards: dict[str, list[str]] = {
+clue_cards: Dict[str, List[str]] = {
     "suspects": [
         "miss_scarlett",
         "colonel_mustard",
@@ -23,13 +25,13 @@ clue_cards: dict[str, list[str]] = {
     ],
 }
 
-character_positions: dict[str, tuple] = {
-    "miss_scarlett": (3, 0),
-    "colonel_mustard": (4, 1),
-    "mrs_white": (3, 4),
-    "mr_green": (1, 4),
-    "mrs_peacock": (0, 3),
-    "professor_plum": (0, 1),
+character_positions: Dict[str, Tuple] = {
+    "miss_scarlett": (4, 0),
+    "colonel_mustard": (6, 2),
+    "mrs_white": (4, 6),
+    "mr_green": (2, 6),
+    "mrs_peacock": (0, 4),
+    "professor_plum": (0, 2),
 }
 
 
@@ -38,12 +40,14 @@ class Clueless:
     A Clue-Less game instance
     """
 
-    def __init__(self):
+    def __init__(self, id, player_count):
+        self.id = id
+        self.player_count = player_count
         self.moves = []
         self.characters = []
         self.character_positions = character_positions
         self.winner = None
-        self.clue_cards = clue_cards
+        self.clue_cards = deepcopy(clue_cards)
 
         # Randomly generate the winning solution when the game is initialized
         self.solution = {
@@ -65,10 +69,29 @@ class Clueless:
         character : str
             The character to add
         """
-        self.characters.append(character)
+        if not self.is_full():
+            self.characters.append(character)
+        else:
+            raise RuntimeError("Game is currently full!")
 
     def get_characters(self):
         return self.characters
+
+    def get_available_characters(self):
+        if self.is_full():
+            return []
+        else:
+            return [
+                character
+                for character in clue_cards["suspects"]
+                if character not in self.characters
+            ]
+
+    def get_id(self):
+        return self.id
+
+    def is_full(self):
+        return self.player_count == len(self.characters)
 
     def move(self, character: str, x, y) -> None:
         x_current, y_current = self.character_positions[character]

@@ -2,6 +2,8 @@
 
 import RocketLaunchOutlined from "@mui/icons-material/RocketLaunchOutlined";
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Dialog,
@@ -16,20 +18,16 @@ import {
 import { useState } from "react";
 import { CharacterSelections, Characters } from "@/components/utils/characters";
 import Link from "next/link";
-
-const style = {
-  position: "absolute" as "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 800,
-  bgcolor: "black",
-  border: "2px solid #000",
-  boxShadow: 24,
-  p: 4,
-};
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function StartGameButton() {
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
+  const { readyState } = useWebSocket(WS_URL, {
+    share: true,
+    reconnectInterval: 5,
+    shouldReconnect: () => true,
+  });
+
   const [open, setOpen] = useState(false);
   const [character, setCharacter] = useState(Characters[0].id);
   const [playerCount, setPlayerCount] = useState("3");
@@ -71,10 +69,10 @@ export default function StartGameButton() {
             </Select>
           </FormControl>
           <FormControl fullWidth>
-            <InputLabel>Maximum Player Count</InputLabel>
+            <InputLabel>Player Count</InputLabel>
             <Select
               value={playerCount}
-              label="Maximum Player Count"
+              label="Player Count"
               onChange={handlePlayerCountChange}
             >
               {["3", "4", "5", "6"].map((count) => (
@@ -85,13 +83,26 @@ export default function StartGameButton() {
             </Select>
           </FormControl>
         </Box>
+        {readyState !== ReadyState.OPEN && (
+          <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
+            <AlertTitle>Error</AlertTitle>
+            Clue-Less game server is currently offline!
+          </Alert>
+        )}
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Link
-            href={`/game?character=${character}&player_count=${playerCount}`}
-          >
-            <Button variant="contained">Start</Button>
-          </Link>
+          {readyState !== ReadyState.OPEN && (
+            <Button variant="contained" disabled>
+              Start
+            </Button>
+          )}
+          {readyState === ReadyState.OPEN && (
+            <Link
+              href={`/game?character=${character}&player_count=${playerCount}`}
+            >
+              <Button variant="contained">Start</Button>
+            </Link>
+          )}
         </DialogActions>
       </Dialog>
     </>

@@ -26,7 +26,7 @@ interface EventObject {
 export default function Game() {
   const [error, setError] = useState("");
   const [winner, setWinner] = useState("");
-  const [joinId, setJoinId] = useState("");
+  const [joinId, setJoinId] = useState<string | null>("");
   const [watchId, setWatchId] = useState("");
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
@@ -37,11 +37,11 @@ export default function Game() {
     CharacterPositions | undefined
   >();
 
-  const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {
-      share: false,
+      share: true,
       shouldReconnect: () => true,
     },
   );
@@ -118,13 +118,8 @@ export default function Game() {
       if (searchParams.has("join")) {
         const player = searchParams.get("character");
 
+        setJoinId(searchParams.get("join"));
         setCharacter(player);
-        setCharacterPositions({
-          [player as string]: {
-            x: GetCharacterById(player as string).starting_position.x,
-            y: GetCharacterById(player as string).starting_position.y,
-          },
-        });
 
         // Player joining an existing game
         event = {
@@ -141,16 +136,13 @@ export default function Game() {
       } else {
         // First player starts a new game
         const player = searchParams.get("character");
+        const playerCount = searchParams.get("player_count");
         setCharacter(player);
-        setCharacterPositions({
-          [player as string]: {
-            x: GetCharacterById(player as string).starting_position.x,
-            y: GetCharacterById(player as string).starting_position.y,
-          },
-        });
+
         event = {
           type: "init",
           character: player,
+          player_count: playerCount,
         };
       }
       console.log(

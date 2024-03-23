@@ -83,38 +83,34 @@ type Room =
   | "lounge"
   | "study";
 
-// prettier-ignore
-// TODO: consolidate these definitions with a loop
 const initialSuspectCheckboxStates: SuspectCheckboxStates = {
-  "miss_scarlett": Array(7).fill(false),
-  "colonel_mustard": Array(7).fill(false),
-  "mrs_white": Array(7).fill(false),
-  "mr_green": Array(7).fill(false),
-  "mrs_peacock": Array(7).fill(false),
-  "professor_plum": Array(7).fill(false),
-}
-
-// prettier-ignore
-const initialWeaponCheckboxStates: WeaponCheckboxStates = {
-  "knife": Array(7).fill(false),
-  "candle_stick": Array(7).fill(false),
-  "revolver": Array(7).fill(false),
-  "rope": Array(7).fill(false),
-  "lead_pipe": Array(7).fill(false),
-  "wrench": Array(7).fill(false),
+  miss_scarlett: Array(7).fill(false),
+  colonel_mustard: Array(7).fill(false),
+  mrs_white: Array(7).fill(false),
+  mr_green: Array(7).fill(false),
+  mrs_peacock: Array(7).fill(false),
+  professor_plum: Array(7).fill(false),
 };
 
-// prettier-ignore
+const initialWeaponCheckboxStates: WeaponCheckboxStates = {
+  knife: Array(7).fill(false),
+  candle_stick: Array(7).fill(false),
+  revolver: Array(7).fill(false),
+  rope: Array(7).fill(false),
+  lead_pipe: Array(7).fill(false),
+  wrench: Array(7).fill(false),
+};
+
 const initialRoomCheckboxStates: RoomCheckboxStates = {
-  "ballroom": Array(7).fill(false),
-  "billiard_room": Array(7).fill(false),
-  "conservatory": Array(7).fill(false),
-  "dining_room": Array(7).fill(false),
-  "hall": Array(7).fill(false),
-  "kitchen": Array(7).fill(false),
-  "library": Array(7).fill(false),
-  "lounge": Array(7).fill(false),
-  "study": Array(7).fill(false),
+  ballroom: Array(7).fill(false),
+  billiard_room: Array(7).fill(false),
+  conservatory: Array(7).fill(false),
+  dining_room: Array(7).fill(false),
+  hall: Array(7).fill(false),
+  kitchen: Array(7).fill(false),
+  library: Array(7).fill(false),
+  lounge: Array(7).fill(false),
+  study: Array(7).fill(false),
 };
 
 function a11yProps(index: number) {
