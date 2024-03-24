@@ -15,10 +15,12 @@ import { Weapons, WeaponSelections } from "./utils/weapons";
 
 interface SuggestionButtonProps {
   handleSuggestionClick(character: string, weapon: string, room: string): void;
+  gameStarted: Boolean;
 }
 
 export default function SuggestionButton({
   handleSuggestionClick,
+  gameStarted,
 }: SuggestionButtonProps) {
   const [open, setOpen] = useState(false);
   const [character, setCharacter] = useState(Characters[0].id);
@@ -36,7 +38,7 @@ export default function SuggestionButton({
 
   return (
     <>
-      <Button variant="contained" onClick={handleOpen}>
+      <Button disabled={!gameStarted} variant="contained" onClick={handleOpen}>
         <span className="pr-2">Suggestion</span>{" "}
         <QuestionMarkOutlined fontSize="small" />
       </Button>

@@ -6,10 +6,7 @@ import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
-import {
-  GetCharacterById,
-  CharacterPositions,
-} from "@/components/utils/characters";
+import { CharacterPositions } from "@/components/utils/characters";
 import { Alert, Box, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
@@ -28,6 +25,7 @@ export default function Game() {
   const [winner, setWinner] = useState("");
   const [joinId, setJoinId] = useState<string | null>("");
   const [watchId, setWatchId] = useState("");
+  const [gameStarted, setGameStarted] = useState(false);
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
   );
@@ -46,17 +44,6 @@ export default function Game() {
     },
   );
 
-  function getWebSocketServer() {
-    if (window.location.host === "clueless.cassini.dev") {
-      // TODO: Update with production server once deployed
-      return "ws://127.0.0.1:8000/ws/clueless";
-    } else if (window.location.host === "localhost:3000") {
-      return "ws://127.0.0.1:8000/ws/clueless";
-    } else {
-      throw new Error(`Unsupported host: ${window.location.host}`);
-    }
-  }
-
   function handleRoomClick(x: Number, y: Number) {
     console.log(`Clicked: (${x}, ${y})`);
     if (joinId) {
@@ -65,7 +52,7 @@ export default function Game() {
         character: character,
         x: x,
         y: y,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
@@ -83,7 +70,7 @@ export default function Game() {
         suspect: suspect,
         weapon: weapon,
         room: room,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
@@ -101,7 +88,7 @@ export default function Game() {
         suspect: suspect,
         weapon: weapon,
         room: room,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
@@ -171,8 +158,14 @@ export default function Game() {
           if (event.watch !== undefined) setWatchId(event.watch);
           break;
 
-        case "move":
-          setCharacterPositions(event.positions);
+        case "position":
+          if (event.positions !== undefined) {
+            setCharacterPositions(event.positions);
+          }
+          break;
+
+        case "start":
+          setGameStarted(true);
           break;
 
         case "win":
@@ -234,6 +227,11 @@ export default function Game() {
               </span>
             ) : null}
           </Alert>
+          {!gameStarted && (
+            <Alert className="mb-2 justify-center" severity="info">
+              Waiting for additional players before starting game!
+            </Alert>
+          )}
           <Box
             sx={{
               display: "flex",
@@ -267,10 +265,17 @@ export default function Game() {
           <Board
             handleRoomClick={handleRoomClick}
             characterPositions={characterPositions}
+            gameStarted={gameStarted}
           />
           <div className="inline-flex mt-2 justify-center space-x-4">
-            <SuggestionButton handleSuggestionClick={handleSuggestionClick} />
-            <AccusationButton handleAccusationClick={handleAccusationClick} />
+            <SuggestionButton
+              handleSuggestionClick={handleSuggestionClick}
+              gameStarted={gameStarted}
+            />
+            <AccusationButton
+              handleAccusationClick={handleAccusationClick}
+              gameStarted={gameStarted}
+            />
             <ClueSheet />
           </div>
 

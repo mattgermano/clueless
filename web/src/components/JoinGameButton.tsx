@@ -55,7 +55,7 @@ export default function JoinGameButton() {
     if (open && gameId.length > 0) {
       let event = {
         type: "query_game",
-        id: gameId,
+        game_id: gameId,
       };
 
       sendJsonMessage(event);

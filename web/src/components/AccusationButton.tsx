@@ -16,10 +16,12 @@ import { Weapons, WeaponSelections } from "./utils/weapons";
 
 interface AccusationButtonProps {
   handleAccusationClick(character: string, weapon: string, room: string): void;
+  gameStarted: Boolean;
 }
 
 export default function AccusationButton({
   handleAccusationClick,
+  gameStarted,
 }: AccusationButtonProps) {
   const [open, setOpen] = useState(false);
   const [character, setCharacter] = useState(Characters[0].id);
@@ -42,7 +44,7 @@ export default function AccusationButton({
 
   return (
     <>
-      <Button variant="outlined" onClick={handleOpen}>
+      <Button disabled={!gameStarted} variant="outlined" onClick={handleOpen}>
         <span className="pr-2">Accusation</span>{" "}
         <PsychologyAltOutlined fontSize="small" />
       </Button>

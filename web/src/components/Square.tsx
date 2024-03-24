@@ -10,10 +10,11 @@ interface SquareProps {
   x: Number;
   y: Number;
   handleClick(x: Number, y: Number): void;
-  width?: number;
-  height?: number;
   characters?: Character[];
   weapon?: Weapon;
+  gameStarted: Boolean;
+  width?: number;
+  height?: number;
 }
 
 export default function Square({
@@ -24,6 +25,7 @@ export default function Square({
   characters,
   weapon,
   handleClick,
+  gameStarted,
   width = 500,
   height = 500,
 }: SquareProps) {
@@ -61,7 +63,11 @@ export default function Square({
         </div>
       )}
       {title.length > 0 && (
-        <Button variant="outlined" onClick={() => handleClick(x, y)}>
+        <Button
+          disabled={!gameStarted}
+          variant="outlined"
+          onClick={() => handleClick(x, y)}
+        >
           <Tooltip title={title}>
             <div className="relative">
               <Image

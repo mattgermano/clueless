@@ -14,6 +14,7 @@ interface BoardProps {
   characterPositions?: CharacterPositions;
   weaponPositions?: WeaponPositions;
   handleRoomClick(x: Number, y: Number): void;
+  gameStarted: Boolean;
 }
 
 const startingRooms = [
@@ -109,6 +110,7 @@ const rooms = [
 export default function Board({
   characterPositions,
   weaponPositions,
+  gameStarted,
   handleRoomClick,
 }: BoardProps) {
   const [firstTurnComplete, setFirstTurnComplete] = useState(false);
@@ -151,6 +153,7 @@ export default function Board({
               characterPositions,
             )}
             weapon={GetWeaponByPosition(room.x, room.y, weaponPositions)}
+            gameStarted={gameStarted}
           />
         </Grid>
       ))}
