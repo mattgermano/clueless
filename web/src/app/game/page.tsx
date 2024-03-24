@@ -6,8 +6,21 @@ import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
-import { CharacterPositions } from "@/components/utils/characters";
-import { Alert, Box, Snackbar } from "@mui/material";
+import { GetCardInfo } from "@/components/utils/cards";
+import {
+  CharacterPositions,
+  CharacterCards,
+  GetCardsByCharacter,
+} from "@/components/utils/characters";
+import {
+  Alert,
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Snackbar,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
@@ -16,6 +29,7 @@ interface EventObject {
   join?: string;
   watch?: string;
   positions?: CharacterPositions;
+  cards?: CharacterCards;
   player?: string;
   message?: string;
 }
@@ -33,6 +47,9 @@ export default function Game() {
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [characterPositions, setCharacterPositions] = useState<
     CharacterPositions | undefined
+  >();
+  const [characterCards, setCharacterCards] = useState<
+    CharacterCards | undefined
   >();
 
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
@@ -166,6 +183,7 @@ export default function Game() {
 
         case "start":
           setGameStarted(true);
+          if (event.cards !== undefined) setCharacterCards(event.cards);
           break;
 
         case "win":
@@ -277,6 +295,29 @@ export default function Game() {
               gameStarted={gameStarted}
             />
             <ClueSheet />
+          </div>
+          <div className="flex flex-row justify-center space-x-4 mt-4">
+            {characterCards &&
+              character &&
+              GetCardsByCharacter(character, characterCards).map((card) => (
+                <Card
+                  variant="outlined"
+                  key={card}
+                  className="ring-4"
+                  sx={{ maxWidth: 300 }}
+                >
+                  <CardMedia
+                    component="img"
+                    height={10}
+                    image={GetCardInfo(card)?.image}
+                  />
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="div">
+                      {GetCardInfo(card)?.name}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
 
           <Snackbar

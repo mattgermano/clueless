@@ -34,6 +34,21 @@ character_positions: Dict[str, Tuple] = {
     "professor_plum": (0, 2),
 }
 
+hallway_posistions: List[Tuple] = [
+    (2, 1),
+    (4, 1),
+    (1, 2),
+    (3, 2),
+    (5, 2),
+    (2, 3),
+    (4, 3),
+    (1, 4),
+    (3, 4),
+    (5, 4),
+    (2, 5),
+    (4, 5),
+]
+
 
 class Clueless:
     """
@@ -46,20 +61,9 @@ class Clueless:
         self.moves = []
         self.characters = []
         self.character_positions = character_positions
+        self.character_cards = {}
         self.winner = None
         self.clue_cards = deepcopy(clue_cards)
-
-        # Randomly generate the winning solution when the game is initialized
-        self.solution = {
-            "suspect": random.choice(clue_cards["suspects"]),
-            "weapon": random.choice(clue_cards["weapons"]),
-            "room": random.choice(clue_cards["rooms"]),
-        }
-
-        # Remove the solution from the cards
-        self.clue_cards["suspects"].remove(self.solution["suspect"])
-        self.clue_cards["weapons"].remove(self.solution["weapon"])
-        self.clue_cards["rooms"].remove(self.solution["room"])
 
     def add_character(self, character: str) -> None:
         """Adds a character to the game
@@ -71,11 +75,25 @@ class Clueless:
         """
         if not self.is_full():
             self.characters.append(character)
+            self.character_cards[character] = []
+
+            if self.is_full():
+                # Randomly generate the winning solution when the game becomes full
+                self.solution = {
+                    "suspect": random.choice(clue_cards["suspects"]),
+                    "weapon": random.choice(clue_cards["weapons"]),
+                    "room": random.choice(clue_cards["rooms"]),
+                }
+
+                # Remove the solution from the cards
+                self.clue_cards["suspects"].remove(self.solution["suspect"])
+                self.clue_cards["weapons"].remove(self.solution["weapon"])
+                self.clue_cards["rooms"].remove(self.solution["room"])
+
+                # Distribute the remaining cards evenly among all players
+                self.distribute_cards()
         else:
             raise RuntimeError("Game is currently full!")
-
-    def get_characters(self):
-        return self.characters
 
     def get_available_characters(self):
         if self.is_full():
@@ -87,11 +105,29 @@ class Clueless:
                 if character not in self.characters
             ]
 
-    def get_id(self):
-        return self.id
+    def distribute_cards(self):
+        if not self.is_full():
+            raise RuntimeError("Cannot distribute cards until game is full!")
+
+        # Flatten the list of cards
+        all_cards = sum(self.clue_cards.values(), [])
+        # Shuffle the cards to randomize distribution
+        random.shuffle(all_cards)
+
+        # Distribute cards evenly among characters
+        character_count = len(self.characters)
+        for index, card in enumerate(all_cards):
+            self.character_cards[self.characters[index % character_count]].append(card)
 
     def is_full(self):
         return self.player_count == len(self.characters)
+
+    def character_in_hallway(self, x, y):
+        for position in character_positions.values():
+            if position == (x, y):
+                return True
+
+        return False
 
     def move(self, character: str, x, y) -> None:
         x_current, y_current = self.character_positions[character]
@@ -110,12 +146,15 @@ class Clueless:
             ]:
                 character_positions[character] = (x, y)
             else:
-                raise RuntimeError(f"Invalid move by {character}! ({x}, {y})")
+                raise RuntimeError(f"Invalid move by {character}!")
+
+        # Each hallway only holds up to one character
+        if (x, y) in hallway_posistions and self.character_in_hallway(x, y):
+            raise RuntimeError(
+                f"Invalid move by {character}! Hallway is currently occupied."
+            )
 
         character_positions[character] = (x, y)
-
-    def get_character_positions(self):
-        return self.character_positions
 
     def suggest(self, suspect: str, weapon: str):
         raise RuntimeError(f"Suggestion ({suspect}, {weapon})")

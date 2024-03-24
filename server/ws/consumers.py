@@ -64,14 +64,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.error(f"Game with ID {game_id} not found!")
             return
 
-        positions = game.get_character_positions()
         event = {
             "type": "position",
             "positions": {},
         }
 
-        for character, position in positions.items():
-            if character in game.get_characters():
+        for character, position in game.character_positions.items():
+            if character in game.characters:
                 event["positions"][character] = {"x": position[0], "y": position[1]}
 
         await self.channel_layer.group_send(
@@ -140,7 +139,11 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         if game.is_full():
             start_event = {
                 "type": "start",
+                "cards": {},
             }
+
+            for character, cards in game.character_cards.items():
+                start_event["cards"][character] = cards
 
             await self.channel_layer.group_send(
                 event["join"],
@@ -163,8 +166,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.error("Game with ID {} not found!".format(event["watch"]))
             return
 
-        await self.channel_layer.group_add(game.get_id(), self.channel_name)
-        await self.broadcast_positions(game.get_id())
+        await self.channel_layer.group_add(game.id, self.channel_name)
+        await self.broadcast_positions(game.id)
 
     @require_keys(["game_id", "character", "x", "y"])
     async def move(self, event: Dict[str, Any]) -> None:

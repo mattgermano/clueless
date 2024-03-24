@@ -13,6 +13,10 @@ export interface CharacterPositions {
   };
 }
 
+export interface CharacterCards {
+  [player: string]: string[];
+}
+
 export interface Position {
   x: number;
   y: number;
@@ -110,6 +114,23 @@ export function GetCharacterById(id: string) {
   }
 
   return undefined;
+}
+
+export function GetCardsByCharacter(
+  character?: string,
+  characterCards?: CharacterCards,
+) {
+  let cards: string[] = [];
+
+  if (characterCards && character) {
+    Object.entries(characterCards).map(([player, playerCards]) => {
+      if (player === character) {
+        cards = playerCards;
+      }
+    });
+  }
+
+  return cards;
 }
 
 export function GetCharactersByPosition(
