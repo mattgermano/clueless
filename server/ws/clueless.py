@@ -25,7 +25,7 @@ clue_cards: Dict[str, List[str]] = {
     ],
 }
 
-character_positions: Dict[str, Tuple] = {
+starting_positions: Dict[str, Tuple] = {
     "miss_scarlett": (4, 0),
     "colonel_mustard": (6, 2),
     "mrs_white": (4, 6),
@@ -34,7 +34,7 @@ character_positions: Dict[str, Tuple] = {
     "professor_plum": (0, 2),
 }
 
-hallway_posistions: List[Tuple] = [
+hallways_positions: List[Tuple] = [
     (2, 1),
     (4, 1),
     (1, 2),
@@ -52,18 +52,35 @@ hallway_posistions: List[Tuple] = [
 
 class Clueless:
     """
-    A Clue-Less game instance
+    A Clue-Less game instance that processes moves, accusations, and
+    suggestions.
     """
 
-    def __init__(self, id, player_count):
+    def __init__(self, id: str, player_count: int) -> None:
+        """Initialize a game of Clue-Less
+
+        Parameters
+        ----------
+        id : str
+            The game ID
+        player_count : int
+            The number of players that must join before the game commences
+        """
         self.id = id
         self.player_count = player_count
-        self.moves = []
         self.characters = []
-        self.character_positions = character_positions
+        self.character_positions: Dict[str, Tuple] = {}
+        self.weapon_positions: Dict[str, Tuple] = {
+            "knife": (-1, -1),
+            "candle_stick": (-1, -1),
+            "revolver": (-1, -1),
+            "rope": (-1, -1),
+            "lead_pipe": (-1, -1),
+            "wrench": (-1, -1),
+        }
         self.character_cards = {}
-        self.winner = None
         self.clue_cards = deepcopy(clue_cards)
+        self.winner = None
 
     def add_character(self, character: str) -> None:
         """Adds a character to the game
@@ -75,6 +92,7 @@ class Clueless:
         """
         if not self.is_full():
             self.characters.append(character)
+            self.character_positions[character] = starting_positions[character]
             self.character_cards[character] = []
 
             if self.is_full():
@@ -95,17 +113,22 @@ class Clueless:
         else:
             raise RuntimeError("Game is currently full!")
 
-    def get_available_characters(self):
-        if self.is_full():
-            return []
-        else:
-            return [
-                character
-                for character in clue_cards["suspects"]
-                if character not in self.characters
-            ]
+    def get_available_characters(self) -> None:
+        """Gets a list of unchosen characters
 
-    def distribute_cards(self):
+        Returns
+        -------
+        List[str]
+            The list of characters not yet chosen
+        """
+        return [
+            character
+            for character in clue_cards["suspects"]
+            if character not in self.characters
+        ]
+
+    def distribute_cards(self) -> None:
+        """Shuffles and evenly distributes Clue cards to all players"""
         if not self.is_full():
             raise RuntimeError("Cannot distribute cards until game is full!")
 
@@ -119,66 +142,125 @@ class Clueless:
         for index, card in enumerate(all_cards):
             self.character_cards[self.characters[index % character_count]].append(card)
 
-    def is_full(self):
+    def is_full(self) -> bool:
+        """Checks if the current game is full
+
+        Returns
+        -------
+        bool
+            True if the game is full, else False
+        """
         return self.player_count == len(self.characters)
 
-    def character_in_hallway(self, x, y):
-        for position in character_positions.values():
+    def character_in_room(self, x, y) -> bool:
+        """Checks if a character is currently occupying a given room
+
+        Parameters
+        ----------
+        x : int
+            The x-coordinate of the room
+        y : int
+            The y-coordinate of the room
+
+        Returns
+        -------
+        bool
+            True if a character is in the room, else False
+        """
+        for position in self.character_positions.values():
             if position == (x, y):
                 return True
 
         return False
 
-    def move(self, character: str, x, y) -> None:
+    def move(self, character: str, x: int, y: int) -> None:
+        """Moves a character to a given square
+
+        Parameters
+        ----------
+        character : str
+            The character to move
+        x : int
+            The x-coordinate to move to
+        y : int
+            The y-coordinate to move to
+
+        Raises
+        ------
+        RuntimeError
+            If a move is invalid
+        """
         x_current, y_current = self.character_positions[character]
+        new_position = (x, y)
 
-        # Characters cannot move more than one square in any direction (except
-        # for secret passages)
-        if (abs(x - x_current) > 1 or abs(y - y_current) > 1) or (
-            abs(x - x_current) == 1 and abs(y - y_current) == 1
+        secret_passages = {
+            ((1, 1), (5, 5)),
+            ((5, 5), (1, 1)),
+            ((5, 1), (1, 5)),
+            ((1, 5), (5, 1)),
+        }
+
+        is_secret_passage = (
+            (x_current, y_current),
+            new_position,
+        ) in secret_passages or (
+            (new_position),
+            (x_current, y_current),
+        ) in secret_passages
+
+        if not is_secret_passage and (
+            (abs(x - x_current) > 1 or abs(y - y_current) > 1)
+            or (abs(x - x_current) == 1 and abs(y - y_current) == 1)
         ):
-            # Check for secret passages
-            if ((x_current, y_current), (x, y)) in [((0, 0), (4, 4)), ((4, 4), (0, 0))]:
-                character_positions[character] = (x, y)
-            elif ((x_current, y_current), (x, y)) in [
-                ((4, 0), (0, 4)),
-                ((0, 4), (4, 0)),
-            ]:
-                character_positions[character] = (x, y)
-            else:
-                raise RuntimeError(f"Invalid move by {character}!")
+            raise RuntimeError(f"Invalid move by {character}!")
 
-        # Each hallway only holds up to one character
-        if (x, y) in hallway_posistions and self.character_in_hallway(x, y):
+        if new_position in hallways_positions and self.character_in_room(x, y):
             raise RuntimeError(
                 f"Invalid move by {character}! Hallway is currently occupied."
             )
 
-        character_positions[character] = (x, y)
+        self.character_positions[character] = new_position
 
-    def suggest(self, suspect: str, weapon: str):
-        raise RuntimeError(f"Suggestion ({suspect}, {weapon})")
-
-    def accuse(self, suspect: str, weapon: str, room: str):
-        """Makes an accusation
+    def suggest(self, character: str, suspect: str, weapon: str) -> None:
+        """Processes a suggestion
 
         Parameters
         ----------
+        character : str
+            The character making the suggestion
         suspect : str
-            The suspect
+            The suspect being suggested
         weapon : str
-            The weapon
-        room : room
-            The room
+            The weapon being suggested
         """
+        if self.character_positions[character] in hallways_positions:
+            raise RuntimeError("Cannot make a suggestion from a hallway!")
 
+        # Move the suspect and weapon to the character's room
+        self.character_positions[suspect] = self.character_positions[character]
+        self.weapon_positions[weapon] = self.character_positions[character]
+
+    def accuse(self, character: str, suspect: str, weapon: str, room: str) -> None:
+        """Processes an accusation to determine if a player has won the game
+
+        Parameters
+        ----------
+        character : str
+            The character making the accusation
+        suspect : str
+            The suspect being accused
+        weapon : str
+            The weapon being accused
+        room : room
+            The room being accused
+        """
         if (
             suspect == self.solution["suspect"]
             and weapon == self.solution["weapon"]
             and room == self.solution["room"]
         ):
             if self.winner is None:
-                self.winner = self.characters[0]
+                self.winner = character
         else:
             raise RuntimeError(
                 "False accusation! Solution is {} with the {} in the {}".format(

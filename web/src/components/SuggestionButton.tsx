@@ -10,11 +10,11 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useState } from "react";
-import { Characters, CharacterSelections } from "./utils/characters";
-import { Weapons, WeaponSelections } from "./utils/weapons";
+import { CharacterSelections, Characters } from "./utils/characters";
+import { WeaponSelections, Weapons } from "./utils/weapons";
 
 interface SuggestionButtonProps {
-  handleSuggestionClick(character: string, weapon: string, room: string): void;
+  handleSuggestionClick(character: string, weapon: string): void;
   gameStarted: Boolean;
 }
 
@@ -73,8 +73,7 @@ export default function SuggestionButton({
           <Button
             variant="contained"
             onClick={() => {
-              // TODO: Update room with current players room
-              handleSuggestionClick(character, weapon, "study");
+              handleSuggestionClick(character, weapon);
               handleClose();
             }}
           >

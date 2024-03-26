@@ -8,10 +8,11 @@ import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
 import { GetCardInfo } from "@/components/utils/cards";
 import {
-  CharacterPositions,
   CharacterCards,
+  CharacterPositions,
   GetCardsByCharacter,
 } from "@/components/utils/characters";
+import { WeaponPositions } from "@/components/utils/weapons";
 import {
   Alert,
   Box,
@@ -28,7 +29,8 @@ interface EventObject {
   type: string;
   join?: string;
   watch?: string;
-  positions?: CharacterPositions;
+  character_positions?: CharacterPositions;
+  weapon_positions?: WeaponPositions;
   cards?: CharacterCards;
   player?: string;
   message?: string;
@@ -47,6 +49,9 @@ export default function Game() {
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [characterPositions, setCharacterPositions] = useState<
     CharacterPositions | undefined
+  >();
+  const [weaponPositions, setWeaponPositions] = useState<
+    WeaponPositions | undefined
   >();
   const [characterCards, setCharacterCards] = useState<
     CharacterCards | undefined
@@ -76,17 +81,13 @@ export default function Game() {
     }
   }
 
-  function handleSuggestionClick(
-    suspect: string,
-    weapon: string,
-    room: string,
-  ) {
+  function handleSuggestionClick(suspect: string, weapon: string) {
     if (joinId) {
       const event = {
         type: "suggestion",
+        character: character,
         suspect: suspect,
         weapon: weapon,
-        room: room,
         game_id: joinId,
       };
 
@@ -102,6 +103,7 @@ export default function Game() {
     if (joinId) {
       const event = {
         type: "accusation",
+        character: character,
         suspect: suspect,
         weapon: weapon,
         room: room,
@@ -176,8 +178,11 @@ export default function Game() {
           break;
 
         case "position":
-          if (event.positions !== undefined) {
-            setCharacterPositions(event.positions);
+          if (event.character_positions !== undefined) {
+            setCharacterPositions(event.character_positions);
+          }
+          if (event.weapon_positions !== undefined) {
+            setWeaponPositions(event.weapon_positions);
           }
           break;
 
@@ -283,6 +288,7 @@ export default function Game() {
           <Board
             handleRoomClick={handleRoomClick}
             characterPositions={characterPositions}
+            weaponPositions={weaponPositions}
             gameStarted={gameStarted}
           />
           <div className="inline-flex mt-2 justify-center space-x-4">
