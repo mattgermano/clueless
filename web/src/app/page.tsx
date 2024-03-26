@@ -1,4 +1,4 @@
-import CharacterPortrait from "@/components/CharacterPortrait";
+import ImagePortrait from "@/components/ImagePortrait";
 import StartGameButton from "@/components/StartGameButton";
 import JoinGameButton from "@/components/JoinGameButton";
 import Particles from "@/components/Particles";
@@ -7,27 +7,27 @@ import { Characters } from "@/components/utils/characters";
 import React from "react";
 
 export default function Home() {
-  const characterPortraits = Characters.map((character) => {
-    if (character.id === "mrs_white") {
-      return (
-        <React.Fragment key={character.id}>
-          <CharacterPortrait title={character.name} image={character.image} />
-          <CharacterPortrait
-            key={`${character.id}-logo`}
-            title="Clue-Less"
-            image="/logo.webp"
-          />
-        </React.Fragment>
-      );
-    } else {
-      return (
-        <CharacterPortrait
-          key={character.id}
-          title={character.name}
-          image={character.image}
-        />
-      );
-    }
+  const characterPortraits = Characters.flatMap((character, index, array) => {
+    // Determine if the current character is in the middle of the array
+    const isMiddle = index === Math.floor((array.length - 1) / 2);
+
+    // Use flatMap to add the extra image when the condition is met
+    return [
+      <ImagePortrait
+        key={character.id}
+        title={character.name}
+        image={character.image}
+      />,
+      ...(isMiddle
+        ? [
+            <ImagePortrait
+              key={`${character.id}-logo`}
+              title="Clue-Less"
+              image="/logo.webp"
+            />,
+          ]
+        : []),
+    ];
   });
 
   return (

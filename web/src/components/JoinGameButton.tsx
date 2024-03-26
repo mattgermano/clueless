@@ -3,37 +3,94 @@
 import PersonAddAlt1 from "@mui/icons-material/PersonAddAlt1";
 import Button from "@mui/material/Button";
 import {
+  Alert,
+  AlertTitle,
   Box,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   InputLabel,
   Link,
   Select,
   SelectChangeEvent,
   TextField,
 } from "@mui/material";
-import { useState } from "react";
-import { CharacterSelections, Characters } from "./utils/characters";
+import { useEffect, useState } from "react";
+import { AvailableCharacterSelections } from "./utils/characters";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function JoinGameButton() {
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    WS_URL,
+    {
+      share: true,
+      reconnectInterval: 5,
+      shouldReconnect: () => true,
+    },
+  );
+
   const [gameId, setGameId] = useState("");
   const [open, setOpen] = useState(false);
-  const [character, setCharacter] = useState(Characters[0].id);
-  const [spectatorChecked, setSpectatorChecked] = useState(false);
+  const [valid, setValid] = useState(false);
+  const [character, setCharacter] = useState("");
+  const [spectator, setSpectator] = useState(false);
+  const [characters, setCharacters] = useState<string[]>([]);
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  function handleSpectatorCheck() {
-    setSpectatorChecked(!spectatorChecked);
-  }
-
+  const handleClose = () => {
+    setGameId("");
+    setCharacter("");
+    setCharacters([]);
+    setOpen(false);
+  };
   const handleCharacterChange = (event: SelectChangeEvent) => {
     setCharacter(event.target.value as string);
   };
+
+  useEffect(() => {
+    setCharacters([]);
+    setSpectator(false);
+    setValid(false);
+    if (open && gameId.length > 0) {
+      let event = {
+        type: "query_game",
+        game_id: gameId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }, [open, gameId, sendJsonMessage]);
+
+  // Run when a new WebSocket message is received (lastJsonMessage)
+  useEffect(() => {
+    if (
+      lastJsonMessage &&
+      typeof lastJsonMessage === "object" &&
+      "type" in lastJsonMessage
+    ) {
+      console.log(
+        `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
+      );
+
+      const event = lastJsonMessage as any;
+      switch (event.type) {
+        case "query_game":
+          setSpectator(event.spectator);
+          setValid(event.valid);
+          if (event.characters !== undefined) {
+            setCharacters(event.characters);
+            if (event.characters.length > 0) {
+              setCharacter(event.characters[0]);
+            }
+          }
+          break;
+
+        default:
+          throw new Error(`Unsupported event type: ${event.type}.`);
+      }
+    }
+  }, [lastJsonMessage]);
 
   return (
     <>
@@ -60,38 +117,63 @@ export default function JoinGameButton() {
               }}
             />
           </FormControl>
-          <FormControl fullWidth>
-            <InputLabel>Character</InputLabel>
-            <Select
-              value={character}
-              label="Character"
-              onChange={handleCharacterChange}
-              disabled={spectatorChecked}
-            >
-              {CharacterSelections}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={
-              <Checkbox
-                value={spectatorChecked}
-                onChange={handleSpectatorCheck}
-              />
-            }
-            label="Join as Spectator?"
-          />
+          {characters.length > 0 && !spectator && (
+            <FormControl fullWidth>
+              <InputLabel>Character</InputLabel>
+              <Select
+                value={character}
+                label="Character"
+                onChange={handleCharacterChange}
+              >
+                {AvailableCharacterSelections({ characters })}
+              </Select>
+            </FormControl>
+          )}
         </Box>
+        {readyState !== ReadyState.OPEN && (
+          <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
+            <AlertTitle>Error</AlertTitle>
+            Clue-Less game server is currently offline!
+          </Alert>
+        )}
+        {readyState === ReadyState.OPEN && gameId.length > 0 && !valid && (
+          <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
+            <AlertTitle>Error</AlertTitle>
+            Invalid game ID!
+          </Alert>
+        )}
+        {readyState === ReadyState.OPEN &&
+          gameId.length > 0 &&
+          valid &&
+          characters.length === 0 && (
+            <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
+              <AlertTitle>Error</AlertTitle>
+              Game is currently full!
+            </Alert>
+          )}
+        {spectator && (
+          <Alert severity="info" className="rounded mt-2 ml-2 mr-2">
+            You will join the game as a spectator.
+          </Alert>
+        )}
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Link
-            href={
-              spectatorChecked
-                ? `/game?watch=${gameId}`
-                : `/game?join=${gameId}&character=${character}`
-            }
-          >
-            <Button variant="contained">Join</Button>
-          </Link>
+          {(readyState !== ReadyState.OPEN || character.length === 0) && (
+            <Button variant="contained" disabled>
+              Join
+            </Button>
+          )}
+          {readyState === ReadyState.OPEN && character.length > 0 && (
+            <Link
+              href={
+                spectator
+                  ? `/game?watch=${gameId}`
+                  : `/game?join=${gameId}&character=${character}`
+              }
+            >
+              <Button variant="contained">Join</Button>
+            </Link>
+          )}
         </DialogActions>
       </Dialog>
     </>

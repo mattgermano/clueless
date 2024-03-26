@@ -5,6 +5,18 @@ export interface Weapon {
   image: string;
 }
 
+export interface WeaponPositions {
+  [weapon: string]: {
+    x: number;
+    y: number;
+  };
+}
+
+interface Position {
+  x: number;
+  y: number;
+}
+
 export const Weapons = [
   {
     id: "knife",
@@ -57,3 +69,31 @@ export const WeaponSelections = Weapons.map((weapon) => (
     </Box>
   </MenuItem>
 ));
+
+export function GetWeaponById(id: string) {
+  for (const weapon of Weapons) {
+    if (weapon.id === id) {
+      return weapon;
+    }
+  }
+
+  return Weapons[0];
+}
+
+export function GetWeaponByPosition(
+  x: Number,
+  y: Number,
+  positions?: WeaponPositions,
+) {
+  let weapon = undefined;
+
+  if (positions) {
+    Object.entries(positions).forEach(([player, value]: [string, Position]) => {
+      if (x === value.x && y === value.y) {
+        weapon = GetWeaponById(player);
+      }
+    });
+  }
+
+  return weapon;
+}

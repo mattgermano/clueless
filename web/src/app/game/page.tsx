@@ -6,8 +6,22 @@ import ClueSheet from "@/components/ClueSheet";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
-import { PlayerPositions } from "@/components/utils/characters";
-import { Alert, Box, Snackbar } from "@mui/material";
+import { GetCardInfo } from "@/components/utils/cards";
+import {
+  CharacterPositions,
+  CharacterCards,
+  GetCardsByCharacter,
+} from "@/components/utils/characters";
+import { WeaponPositions } from "@/components/utils/weapons";
+import {
+  Alert,
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Snackbar,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
@@ -15,7 +29,9 @@ interface EventObject {
   type: string;
   join?: string;
   watch?: string;
-  positions?: PlayerPositions;
+  character_positions?: CharacterPositions;
+  weapon_positions?: WeaponPositions;
+  cards?: CharacterCards;
   player?: string;
   message?: string;
 }
@@ -23,36 +39,32 @@ interface EventObject {
 export default function Game() {
   const [error, setError] = useState("");
   const [winner, setWinner] = useState("");
-  const [joinId, setJoinId] = useState("");
+  const [joinId, setJoinId] = useState<string | null>("");
   const [watchId, setWatchId] = useState("");
+  const [gameStarted, setGameStarted] = useState(false);
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
   );
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [characterPositions, setCharacterPositions] = useState<
-    PlayerPositions | undefined
+    CharacterPositions | undefined
+  >();
+  const [weaponPositions, setWeaponPositions] = useState<
+    WeaponPositions | undefined
+  >();
+  const [characterCards, setCharacterCards] = useState<
+    CharacterCards | undefined
   >();
 
-  const WS_URL = "ws://127.0.0.1:8000/ws/clueless";
+  const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
     WS_URL,
     {
-      share: false,
+      share: true,
       shouldReconnect: () => true,
     },
   );
-
-  function getWebSocketServer() {
-    if (window.location.host === "clueless.cassini.dev") {
-      // TODO: Update with production server once deployed
-      return "ws://127.0.0.1:8000/ws/clueless";
-    } else if (window.location.host === "localhost:3000") {
-      return "ws://127.0.0.1:8000/ws/clueless";
-    } else {
-      throw new Error(`Unsupported host: ${window.location.host}`);
-    }
-  }
 
   function handleRoomClick(x: Number, y: Number) {
     console.log(`Clicked: (${x}, ${y})`);
@@ -62,25 +74,21 @@ export default function Game() {
         character: character,
         x: x,
         y: y,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
     }
   }
 
-  function handleSuggestionClick(
-    suspect: string,
-    weapon: string,
-    room: string,
-  ) {
+  function handleSuggestionClick(suspect: string, weapon: string) {
     if (joinId) {
       const event = {
         type: "suggestion",
+        character: character,
         suspect: suspect,
         weapon: weapon,
-        room: room,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
@@ -95,10 +103,11 @@ export default function Game() {
     if (joinId) {
       const event = {
         type: "accusation",
+        character: character,
         suspect: suspect,
         weapon: weapon,
         room: room,
-        game: joinId,
+        game_id: joinId,
       };
 
       sendJsonMessage(event);
@@ -113,7 +122,10 @@ export default function Game() {
       const searchParams = new URLSearchParams(document.location.search);
 
       if (searchParams.has("join")) {
-        setCharacter(searchParams.get("character"));
+        const player = searchParams.get("character");
+
+        setJoinId(searchParams.get("join"));
+        setCharacter(player);
 
         // Player joining an existing game
         event = {
@@ -130,11 +142,13 @@ export default function Game() {
       } else {
         // First player starts a new game
         const player = searchParams.get("character");
+        const playerCount = searchParams.get("player_count");
         setCharacter(player);
-        setCharacterPositions({ [player as string]: { x: 0, y: 0 } });
+
         event = {
           type: "init",
           character: player,
+          player_count: playerCount,
         };
       }
       console.log(
@@ -163,8 +177,18 @@ export default function Game() {
           if (event.watch !== undefined) setWatchId(event.watch);
           break;
 
-        case "move":
-          setCharacterPositions(event.positions);
+        case "position":
+          if (event.character_positions !== undefined) {
+            setCharacterPositions(event.character_positions);
+          }
+          if (event.weapon_positions !== undefined) {
+            setWeaponPositions(event.weapon_positions);
+          }
+          break;
+
+        case "start":
+          setGameStarted(true);
+          if (event.cards !== undefined) setCharacterCards(event.cards);
           break;
 
         case "win":
@@ -226,6 +250,11 @@ export default function Game() {
               </span>
             ) : null}
           </Alert>
+          {!gameStarted && (
+            <Alert className="mb-2 justify-center" severity="info">
+              Waiting for additional players before starting game!
+            </Alert>
+          )}
           <Box
             sx={{
               display: "flex",
@@ -258,12 +287,43 @@ export default function Game() {
           </div>
           <Board
             handleRoomClick={handleRoomClick}
-            positions={characterPositions}
+            characterPositions={characterPositions}
+            weaponPositions={weaponPositions}
+            gameStarted={gameStarted}
           />
           <div className="inline-flex mt-2 justify-center space-x-4">
-            <SuggestionButton handleSuggestionClick={handleSuggestionClick} />
-            <AccusationButton handleAccusationClick={handleAccusationClick} />
+            <SuggestionButton
+              handleSuggestionClick={handleSuggestionClick}
+              gameStarted={gameStarted}
+            />
+            <AccusationButton
+              handleAccusationClick={handleAccusationClick}
+              gameStarted={gameStarted}
+            />
             <ClueSheet />
+          </div>
+          <div className="flex flex-row justify-center space-x-4 mt-4">
+            {characterCards &&
+              character &&
+              GetCardsByCharacter(character, characterCards).map((card) => (
+                <Card
+                  variant="outlined"
+                  key={card}
+                  className="ring-4"
+                  sx={{ maxWidth: 300 }}
+                >
+                  <CardMedia
+                    component="img"
+                    height={10}
+                    image={GetCardInfo(card)?.image}
+                  />
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="div">
+                      {GetCardInfo(card)?.name}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
 
           <Snackbar

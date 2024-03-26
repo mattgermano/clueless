@@ -1,18 +1,23 @@
 import { Box, ListItemText, MenuItem } from "@mui/material";
-import CharacterPortrait from "../CharacterPortrait";
+import ImagePortrait from "../ImagePortrait";
 export interface Character {
+  id: string;
   name: string;
   image: string;
 }
 
-export interface PlayerPositions {
+export interface CharacterPositions {
   [player: string]: {
     x: number;
     y: number;
   };
 }
 
-interface Position {
+export interface CharacterCards {
+  [player: string]: string[];
+}
+
+export interface Position {
   x: number;
   y: number;
 }
@@ -61,7 +66,7 @@ export const CharacterSelections = Characters.map((character) => (
       }}
     >
       <ListItemText primary={character.name} />
-      <CharacterPortrait
+      <ImagePortrait
         image={character.image}
         title={character.name}
         width={50}
@@ -70,6 +75,36 @@ export const CharacterSelections = Characters.map((character) => (
     </Box>
   </MenuItem>
 ));
+
+export const AvailableCharacterSelections = ({
+  characters,
+}: {
+  characters: string[];
+}) => {
+  return Characters.map(
+    (character) =>
+      characters.includes(character.id) && (
+        <MenuItem value={character.id} key={character.id}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
+            <ListItemText primary={character.name} />
+            <ImagePortrait
+              image={character.image}
+              title={character.name}
+              width={50}
+              height={50}
+            />
+          </Box>
+        </MenuItem>
+      ),
+  );
+};
 
 export function GetCharacterById(id: string) {
   for (const character of Characters) {
@@ -81,20 +116,40 @@ export function GetCharacterById(id: string) {
   return undefined;
 }
 
-export function GetCharacterByPosition(
-  x: Number,
-  y: Number,
-  positions?: PlayerPositions,
+export function GetCardsByCharacter(
+  character?: string,
+  characterCards?: CharacterCards,
 ) {
-  let character = undefined;
+  let cards: string[] = [];
 
-  if (positions) {
-    Object.entries(positions).forEach(([player, value]: [string, Position]) => {
-      if (x === value.x && y === value.y) {
-        character = GetCharacterById(player);
+  if (characterCards && character) {
+    Object.entries(characterCards).map(([player, playerCards]) => {
+      if (player === character) {
+        cards = playerCards;
       }
     });
   }
 
-  return character;
+  return cards;
+}
+
+export function GetCharactersByPosition(
+  x: Number,
+  y: Number,
+  positions?: CharacterPositions,
+) {
+  let characters: Character[] = [];
+
+  if (positions) {
+    Object.entries(positions).forEach(([player, value]: [string, Position]) => {
+      if (x === value.x && y === value.y) {
+        const character = GetCharacterById(player);
+        if (character) {
+          characters.push(character);
+        }
+      }
+    });
+  }
+
+  return characters;
 }

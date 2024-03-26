@@ -1,18 +1,18 @@
 import { Avatar, Box, Tooltip } from "@mui/material";
 
-interface CharacterPortraitProps {
+interface ImagePortraitProps {
   title: string;
   image: string;
   width?: number;
   height?: number;
 }
 
-export default function CharacterPortrait({
+export default function ImagePortrait({
   title,
   image,
   width = 150,
   height = 150,
-}: CharacterPortraitProps) {
+}: ImagePortraitProps) {
   return (
     <Tooltip title={title}>
       <Avatar
