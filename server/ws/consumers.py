@@ -218,7 +218,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         except RuntimeError as exc:
             await self.error(str(exc))
 
-    @require_keys(["game_id", "suspect", "weapon", "room"])
+    @require_keys(["game_id", "character", "suspect", "weapon", "room"])
     async def accuse(self, event: Dict[str, str]) -> None:
         """Processes an accusation event
 
@@ -236,7 +236,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         try:
             # Make the accusation
-            game.accuse(event["suspect"], event["weapon"], event["room"])
+            game.accuse(
+                event["character"], event["suspect"], event["weapon"], event["room"]
+            )
 
             if game.winner is not None:
                 win_event = {"type": "win", "player": game.winner}
@@ -266,7 +268,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         query_game_event = {
             "type": "query_game",
             "valid": valid,
-            "characters": game.get_available_characters(),
+            "characters": [] if game.is_full() else game.get_available_characters(),
             "spectator": spectator,
         }
         await self.send(json.dumps(query_game_event))

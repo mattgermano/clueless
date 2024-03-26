@@ -102,6 +102,7 @@ export default function Game() {
     if (joinId) {
       const event = {
         type: "accusation",
+        character: character,
         suspect: suspect,
         weapon: weapon,
         room: room,
