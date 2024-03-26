@@ -78,12 +78,17 @@ ASGI_APPLICATION = "server.asgi.application"
 WSGI_APPLICATION = "server.wsgi.application"
 
 # Channel Layers
-
+REDIS_HOST = host if (host := envvars.get("REDIS_HOST")) is not None else "redis"
+REDIS_PORT = port if (port := envvars.get("REDIS_PORT")) is not None else 6379
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [
+                {
+                    "address": f"redis://{REDIS_HOST}:{REDIS_PORT}",
+                }
+            ],
         },
     },
 }

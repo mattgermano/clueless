@@ -8,8 +8,8 @@ import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
 import { GetCardInfo } from "@/components/utils/cards";
 import {
-  CharacterPositions,
   CharacterCards,
+  CharacterPositions,
   GetCardsByCharacter,
 } from "@/components/utils/characters";
 import { WeaponPositions } from "@/components/utils/weapons";

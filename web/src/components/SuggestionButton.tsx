@@ -10,8 +10,8 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useState } from "react";
-import { Characters, CharacterSelections } from "./utils/characters";
-import { Weapons, WeaponSelections } from "./utils/weapons";
+import { CharacterSelections, Characters } from "./utils/characters";
+import { WeaponSelections, Weapons } from "./utils/weapons";
 
 interface SuggestionButtonProps {
   handleSuggestionClick(character: string, weapon: string): void;
