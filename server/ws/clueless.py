@@ -25,7 +25,7 @@ clue_cards: Dict[str, List[str]] = {
     ],
 }
 
-character_positions: Dict[str, Tuple] = {
+starting_positions: Dict[str, Tuple] = {
     "miss_scarlett": (4, 0),
     "colonel_mustard": (6, 2),
     "mrs_white": (4, 6),
@@ -52,7 +52,8 @@ hallways_positions: List[Tuple] = [
 
 class Clueless:
     """
-    A Clue-Less game instance processes moves, accusations, and suggestions.
+    A Clue-Less game instance that processes moves, accusations, and
+    suggestions.
     """
 
     def __init__(self, id: str, player_count: int) -> None:
@@ -68,7 +69,15 @@ class Clueless:
         self.id = id
         self.player_count = player_count
         self.characters = []
-        self.character_positions = character_positions
+        self.character_positions: Dict[str, Tuple] = {}
+        self.weapon_positions: Dict[str, Tuple] = {
+            "knife": (-1, -1),
+            "candle_stick": (-1, -1),
+            "revolver": (-1, -1),
+            "rope": (-1, -1),
+            "lead_pipe": (-1, -1),
+            "wrench": (-1, -1),
+        }
         self.character_cards = {}
         self.clue_cards = deepcopy(clue_cards)
         self.winner = None
@@ -83,6 +92,7 @@ class Clueless:
         """
         if not self.is_full():
             self.characters.append(character)
+            self.character_positions[character] = starting_positions[character]
             self.character_cards[character] = []
 
             if self.is_full():
@@ -142,22 +152,22 @@ class Clueless:
         """
         return self.player_count == len(self.characters)
 
-    def character_in_hallway(self, x, y) -> bool:
-        """Checks if a character is currently occupying a given hallway
+    def character_in_room(self, x, y) -> bool:
+        """Checks if a character is currently occupying a given room
 
         Parameters
         ----------
         x : int
-            The x-coordinate of the hallway
+            The x-coordinate of the room
         y : int
-            The y-coordinate of the hallway
+            The y-coordinate of the room
 
         Returns
         -------
         bool
-            True if a character is in the hallway, else False
+            True if a character is in the room, else False
         """
-        for position in character_positions.values():
+        for position in self.character_positions.values():
             if position == (x, y):
                 return True
 
@@ -169,7 +179,7 @@ class Clueless:
         Parameters
         ----------
         character : str
-            _description_
+            The character to move
         x : int
             The x-coordinate to move to
         y : int
@@ -204,15 +214,31 @@ class Clueless:
         ):
             raise RuntimeError(f"Invalid move by {character}!")
 
-        if new_position in hallways_positions and self.character_in_hallway(x, y):
+        if new_position in hallways_positions and self.character_in_room(x, y):
             raise RuntimeError(
                 f"Invalid move by {character}! Hallway is currently occupied."
             )
 
         self.character_positions[character] = new_position
 
-    def suggest(self, suspect: str, weapon: str):
-        raise RuntimeError(f"Suggestion ({suspect}, {weapon})")
+    def suggest(self, character: str, suspect: str, weapon: str) -> None:
+        """Processes a suggestion
+
+        Parameters
+        ----------
+        character : str
+            The character making the suggestion
+        suspect : str
+            The suspect being suggested
+        weapon : str
+            The weapon being suggested
+        """
+        if self.character_positions[character] in hallways_positions:
+            raise RuntimeError("Cannot make a suggestion from a hallway!")
+
+        # Move the suspect and weapon to the character's room
+        self.character_positions[suspect] = self.character_positions[character]
+        self.weapon_positions[weapon] = self.character_positions[character]
 
     def accuse(self, character: str, suspect: str, weapon: str, room: str) -> None:
         """Processes an accusation to determine if a player has won the game

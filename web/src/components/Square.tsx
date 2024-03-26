@@ -83,8 +83,10 @@ export default function Square({
                   let position = "";
                   if (index === 0) {
                     position = "left-0 top-0";
-                  } else {
+                  } else if (index === 1) {
                     position = "right-0 top-0";
+                  } else if (index === 2) {
+                    position = "bottom-0 left-0";
                   }
 
                   return (
@@ -100,7 +102,7 @@ export default function Square({
                 })}
 
               {weapon && (
-                <div className="absolute -bottom-4 -left-4">
+                <div className="absolute bottom-0 right-0">
                   <ImagePortrait
                     title={weapon.name}
                     image={weapon.image}

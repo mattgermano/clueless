@@ -14,6 +14,14 @@ WATCH_GAMES = {}
 
 
 def require_keys(required_keys: List[str]):
+    """Defines a decorator function that checks if a given list of keys are present in a dictionary
+
+    Parameters
+    ----------
+    required_keys : List[str]
+        A list of keys that must be present in the dictionary
+    """
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(self, event):
@@ -66,12 +74,20 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         event = {
             "type": "position",
-            "positions": {},
+            "character_positions": {},
+            "weapon_positions": {},
         }
 
         for character, position in game.character_positions.items():
-            if character in game.characters:
-                event["positions"][character] = {"x": position[0], "y": position[1]}
+            event["character_positions"][character] = {
+                "x": position[0],
+                "y": position[1],
+            }
+        for weapon, position in game.weapon_positions.items():
+            event["weapon_positions"][weapon] = {
+                "x": position[0],
+                "y": position[1],
+            }
 
         await self.channel_layer.group_send(
             game_id, {"type": "game_event", "message": json.dumps(event)}
@@ -84,7 +100,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event: str
+        event : Dict[str, str]
             The start game event
         """
         join_key = secrets.token_urlsafe(12)
@@ -115,11 +131,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event
+        event : Dict[str, str]
             The join game event
         """
-
-        # Find the Clueless game
         try:
             game = JOIN_GAMES[event["join"]]
             try:
@@ -156,10 +170,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event
+        event : Dict[str, str]
             The watch game event
         """
-
         try:
             game = WATCH_GAMES[event["watch"]]
         except KeyError:
@@ -175,10 +188,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event
+        event : Dict[str, Any]
             The move event
         """
-
         try:
             game = JOIN_GAMES[event["game_id"]]
         except KeyError:
@@ -196,16 +208,15 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Send a "position" event to update the UI
         await self.broadcast_positions(event["game_id"])
 
-    @require_keys(["game_id", "suspect", "weapon", "room"])
+    @require_keys(["game_id", "character", "suspect", "weapon"])
     async def suggest(self, event: Dict[str, str]):
         """Processes a suggestion event
 
         Parameters
         ----------
-        event
+        event : Dict[str, str]
             The suggestion event
         """
-
         try:
             game = JOIN_GAMES[event["game_id"]]
         except KeyError:
@@ -214,9 +225,11 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         try:
             # Make the suggestion
-            game.suggest(event["suspect"], event["weapon"])
+            game.suggest(event["character"], event["suspect"], event["weapon"])
         except RuntimeError as exc:
             await self.error(str(exc))
+
+        await self.broadcast_positions(event["game_id"])
 
     @require_keys(["game_id", "character", "suspect", "weapon", "room"])
     async def accuse(self, event: Dict[str, str]) -> None:
@@ -224,10 +237,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event
+        event : Dict[str, str]
             The accusation event
         """
-
         try:
             game = JOIN_GAMES[event["game_id"]]
         except KeyError:
@@ -252,6 +264,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
     @require_keys(["game_id"])
     async def query_game(self, event: Dict[str, str]) -> None:
+        """Processes a query_game event
+
+        Parameters
+        ----------
+        event : Dict[str, str]
+            The query_game event
+        """
         valid = False
 
         if event["game_id"] in JOIN_GAMES:
@@ -274,6 +293,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps(query_game_event))
 
     async def init(self, event: Dict[str, str]) -> None:
+        """Processes an initialization event
+
+        Parameters
+        ----------
+        event : Dict[str, str]
+            The initialization event
+        """
         if "join" in event:
             # Players join an existing game
             await self.join(event)
@@ -289,7 +315,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         Parameters
         ----------
-        event
+        event: Dict[str, Any]
             The event to send to the client
         """
         message = event["message"]
