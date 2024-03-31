@@ -1,6 +1,6 @@
 import random
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 clue_cards: Dict[str, List[str]] = {
     "suspects": [
@@ -25,7 +25,7 @@ clue_cards: Dict[str, List[str]] = {
     ],
 }
 
-starting_positions: Dict[str, Tuple] = {
+starting_positions: Dict[str, Tuple[int, int]] = {
     "miss_scarlett": (4, 0),
     "colonel_mustard": (6, 2),
     "mrs_white": (4, 6),
@@ -68,9 +68,9 @@ class Clueless:
         """
         self.id = id
         self.player_count = player_count
-        self.characters = []
-        self.character_positions: Dict[str, Tuple] = {}
-        self.weapon_positions: Dict[str, Tuple] = {
+        self.characters: List[str] = []
+        self.character_positions: Dict[str, Tuple[int, int]] = {}
+        self.weapon_positions: Dict[str, Tuple[int, int]] = {
             "knife": (-1, -1),
             "candle_stick": (-1, -1),
             "revolver": (-1, -1),
@@ -78,9 +78,9 @@ class Clueless:
             "lead_pipe": (-1, -1),
             "wrench": (-1, -1),
         }
-        self.character_cards = {}
+        self.character_cards: Dict[str, List[str]] = {}
         self.clue_cards = deepcopy(clue_cards)
-        self.winner = None
+        self.winner: Optional[str] = None
 
     def add_character(self, character: str) -> None:
         """Adds a character to the game
@@ -113,7 +113,7 @@ class Clueless:
         else:
             raise RuntimeError("Game is currently full!")
 
-    def get_available_characters(self) -> None:
+    def get_available_characters(self) -> list[str]:
         """Gets a list of unchosen characters
 
         Returns
@@ -133,7 +133,7 @@ class Clueless:
             raise RuntimeError("Cannot distribute cards until game is full!")
 
         # Flatten the list of cards
-        all_cards = sum(self.clue_cards.values(), [])
+        all_cards: List[str] = sum(self.clue_cards.values(), [])
         # Shuffle the cards to randomize distribution
         random.shuffle(all_cards)
 

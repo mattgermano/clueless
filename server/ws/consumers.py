@@ -3,14 +3,15 @@
 import json
 import secrets
 from functools import wraps
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Union
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels_redis.core import RedisChannelLayer
 
 from . import clueless
 
-JOIN_GAMES = {}
-WATCH_GAMES = {}
+JOIN_GAMES: Dict[str, clueless.Clueless] = {}
+WATCH_GAMES: Dict[str, clueless.Clueless] = {}
 
 
 def require_keys(required_keys: List[str]):
@@ -38,11 +39,15 @@ def require_keys(required_keys: List[str]):
 
 
 class CluelessConsumer(AsyncWebsocketConsumer):
+    async def __call__(self, scope, receive, send) -> None:
+        await super().__call__(scope, receive, send)
+        self.channel_layer: RedisChannelLayer = self.channel_layer
+
     async def connect(self) -> None:
         """Accepts client connections"""
         await self.accept()
 
-    async def disconnect(self, close_code) -> None:
+    async def disconnect(self, code) -> None:
         """Disconnects clients from the channel"""
         for game_id in JOIN_GAMES.keys():
             await self.channel_layer.group_discard(game_id, self.channel_name)
@@ -72,22 +77,26 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.error(f"Game with ID {game_id} not found!")
             return
 
-        event = {
+        event: Dict[str, Union[str, Dict[str, Dict[str, int]]]] = {
             "type": "position",
-            "character_positions": {},
-            "weapon_positions": {},
         }
 
+        character_positions: Dict[str, Dict[str, int]] = dict()
+        weapon_positions: Dict[str, Dict[str, int]] = dict()
+
         for character, position in game.character_positions.items():
-            event["character_positions"][character] = {
+            character_positions[character] = {
                 "x": position[0],
                 "y": position[1],
             }
         for weapon, position in game.weapon_positions.items():
-            event["weapon_positions"][weapon] = {
+            weapon_positions[weapon] = {
                 "x": position[0],
                 "y": position[1],
             }
+
+        event["character_positions"] = character_positions
+        event["weapon_positions"] = weapon_positions
 
         await self.channel_layer.group_send(
             game_id, {"type": "game_event", "message": json.dumps(event)}
