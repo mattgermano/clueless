@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-1ufrso3nlgtgi2v6c7j@ea#yt3k$i8l%hrd=bemncug$mfb#+(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = debug if (debug := envvars.get("DEBUG")) is not None else False
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "clueless.local", "clueless.cassini.dev"]
 
 
 # Application definition
@@ -78,12 +78,17 @@ ASGI_APPLICATION = "server.asgi.application"
 WSGI_APPLICATION = "server.wsgi.application"
 
 # Channel Layers
-
+REDIS_HOST = host if (host := envvars.get("REDIS_HOST")) is not None else "redis"
+REDIS_PORT = port if (port := envvars.get("REDIS_PORT")) is not None else 6379
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [
+                {
+                    "address": f"redis://{REDIS_HOST}:{REDIS_PORT}",
+                }
+            ],
         },
     },
 }
