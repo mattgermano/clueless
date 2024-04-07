@@ -2,13 +2,13 @@
 
 import Square from "@/components/Square";
 import Grid from "@mui/material/Unstable_Grid2";
+import { useEffect, useState } from "react";
 import {
-  Position,
+  CharacterPositions,
   GetCharactersByPosition,
-  CharacterPositions as CharacterPositions,
+  Position,
 } from "./utils/characters";
 import { GetWeaponByPosition, WeaponPositions } from "./utils/weapons";
-import { useEffect, useState } from "react";
 
 interface BoardProps {
   characterPositions?: CharacterPositions;
@@ -152,7 +152,7 @@ export default function Board({
               room.y,
               characterPositions,
             )}
-            weapon={GetWeaponByPosition(room.x, room.y, weaponPositions)}
+            weapons={GetWeaponByPosition(room.x, room.y, weaponPositions)}
             gameStarted={gameStarted}
           />
         </Grid>

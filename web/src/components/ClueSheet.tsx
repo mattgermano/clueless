@@ -23,8 +23,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { Characters } from "./utils/characters";
-import { Weapons } from "./utils/weapons";
 import { Rooms } from "./utils/rooms";
+import { Weapons } from "./utils/weapons";
 
 interface SuspectCheckboxStates {
   miss_scarlett: boolean[];
