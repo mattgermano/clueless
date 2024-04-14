@@ -302,7 +302,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             )
 
             if game.winner is not None:
-                win_event = {"type": "win", "player": game.winner}
+                win_event = {
+                    "type": "win",
+                    "character": game.winner,
+                    "suspect": event["suspect"],
+                    "weapon": event["weapon"],
+                    "room": event["room"],
+                }
                 await self.channel_layer.group_send(
                     event["game_id"],
                     {"type": "game_event", "message": json.dumps(win_event)},
