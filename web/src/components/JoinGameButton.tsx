@@ -1,7 +1,6 @@
 "use client";
 
 import PersonAddAlt1 from "@mui/icons-material/PersonAddAlt1";
-import Button from "@mui/material/Button";
 import {
   Alert,
   AlertTitle,
@@ -11,14 +10,15 @@ import {
   DialogTitle,
   FormControl,
   InputLabel,
-  Link,
   Select,
   SelectChangeEvent,
   TextField,
 } from "@mui/material";
+import Button from "@mui/material/Button";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AvailableCharacterSelections } from "./utils/characters";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { AvailableCharacterSelections } from "./utils/characters";
 
 export default function JoinGameButton() {
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;

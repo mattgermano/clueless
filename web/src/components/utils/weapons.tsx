@@ -1,6 +1,7 @@
 import { Avatar, Box, ListItemText, MenuItem } from "@mui/material";
 
 export interface Weapon {
+  id: string;
   name: string;
   image: string;
 }
@@ -85,15 +86,18 @@ export function GetWeaponByPosition(
   y: Number,
   positions?: WeaponPositions,
 ) {
-  let weapon = undefined;
+  let weapons: Weapon[] = [];
 
   if (positions) {
     Object.entries(positions).forEach(([player, value]: [string, Position]) => {
       if (x === value.x && y === value.y) {
-        weapon = GetWeaponById(player);
+        const weapon = GetWeaponById(player);
+        if (weapon) {
+          weapons.push(weapon);
+        }
       }
     });
   }
 
-  return weapon;
+  return weapons;
 }
