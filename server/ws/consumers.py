@@ -291,6 +291,11 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             return
 
         try:
+            # alert other players of the accusation
+            await self.channel_layer.group_send(
+                event["game_id"], {"type": "game_event", "message": json.dumps(event)}
+            )
+
             # Make the accusation
             game.accuse(
                 event["character"], event["suspect"], event["weapon"], event["room"]
@@ -304,8 +309,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                 )
                 return
 
-        except RuntimeError as exc:
-            await self.error(str(exc))
+        # game.accuse throws RuntimeError on false accusation
+        except RuntimeError as _:
+            lose_event = {"type": "lose", "player": event["character"]}
+            await self.channel_layer.group_send(
+                event["game_id"],
+                {"type": "game_event", "message": json.dumps(lose_event)},
+            )
 
         await self.broadcast_turn(event["game_id"])
 
@@ -445,7 +455,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event : Dict[str, Any]
             The message event
         """
-        await self.channel_layer.group_send(event["game_id"], event)
+        await self.channel_layer.group_send(
+            event["game_id"], {"type": "game_event", "message": json.dumps(event)}
+        )
 
     async def receive(self, text_data: str) -> None:
         """Receives a message from the Websocket
