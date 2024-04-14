@@ -8,8 +8,8 @@ import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
 import { GetCardInfo } from "@/components/utils/cards";
 import {
-  CharacterPositions,
   CharacterCards,
+  CharacterPositions,
   GetCardsByCharacter,
 } from "@/components/utils/characters";
 import { WeaponPositions } from "@/components/utils/weapons";
@@ -24,6 +24,8 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+
+import { Message } from "@/components/chat/Message";
 
 interface EventObject {
   type: string;
@@ -56,6 +58,7 @@ export default function Game() {
   const [characterCards, setCharacterCards] = useState<
     CharacterCards | undefined
   >();
+  const [messages, setMessages] = useState<Array<Message>>([]);
 
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL || null;
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
@@ -189,6 +192,9 @@ export default function Game() {
         case "start":
           setGameStarted(true);
           if (event.cards !== undefined) setCharacterCards(event.cards);
+          break;
+
+        case "chat":
           break;
 
         case "win":
