@@ -3,6 +3,7 @@
 import AccusationButton from "@/components/AccusationButton";
 import Board from "@/components/Board";
 import ClueSheet from "@/components/ClueSheet";
+import ImagePortrait from "@/components/ImagePortrait";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
@@ -13,7 +14,8 @@ import {
   GetCardsByCharacter,
   GetCharacterById,
 } from "@/components/utils/characters";
-import { WeaponPositions } from "@/components/utils/weapons";
+import { GetRoomById } from "@/components/utils/rooms";
+import { GetWeaponById, WeaponPositions } from "@/components/utils/weapons";
 import { SkipNext } from "@mui/icons-material";
 import {
   Alert,
@@ -58,6 +60,13 @@ export default function Game() {
     undefined,
   );
   const [suggestion, setSuggestion] = useState({
+    character: "",
+    suspect: "",
+    weapon: "",
+    room: "",
+  });
+  const [accusation, setAccusation] = useState({
+    character: "",
     suspect: "",
     weapon: "",
     room: "",
@@ -156,6 +165,16 @@ export default function Game() {
     }
   }
 
+  function closeBackdrop() {
+    setAccusation({
+      character: "",
+      suspect: "",
+      weapon: "",
+      room: "",
+    });
+    setBackdropOpen(false);
+  }
+
   useEffect(() => {
     let event = {};
 
@@ -240,11 +259,13 @@ export default function Game() {
 
         case "suggestion":
           if (
+            event.character !== undefined &&
             event.suspect !== undefined &&
             event.weapon !== undefined &&
             event.room !== undefined
           ) {
             setSuggestion({
+              character: event.character,
               suspect: event.suspect,
               weapon: event.weapon,
               room: event.room,
@@ -273,9 +294,41 @@ export default function Game() {
           }
           break;
 
+        case "accusation":
+          if (
+            event.character !== undefined &&
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setAccusation({
+              character: event.character,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+
+            setInfo(
+              `${GetCharacterById(event.character)?.name} has made a false accusation! They accused ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+            );
+            setBackdropOpen(true);
+          }
+          break;
+
         case "win":
-          if (event.player !== undefined) {
-            setWinner(event.player);
+          if (
+            event.character !== undefined &&
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setAccusation({
+              character: event.character,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+            setWinner(event.character);
             setGameStarted(false);
           }
           break;
@@ -335,14 +388,14 @@ export default function Game() {
               gap: 2,
             }}
           >
-            {joinId && (
+            {joinId && !gameStarted && !winner && (
               <TextWithCopyButton
                 title="Join Game ID:"
                 text={joinId}
                 handleCopy={handleCopy}
               />
             )}
-            {watchId && (
+            {watchId && !gameStarted && !winner && (
               <TextWithCopyButton
                 title="Watch Game ID:"
                 text={watchId}
@@ -352,9 +405,36 @@ export default function Game() {
           </Box>
           <div className="mb-2 mt-2">
             {winner && (
-              <Alert className="justify-center" severity="success">
-                {GetCharacterById(winner)?.name} has won the game!
-              </Alert>
+              <Card className="flex flex-col" variant="outlined">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {GetCharacterById(winner)?.name} has won the game!
+                </Typography>
+                <Typography variant="h6" component="div" className="block mb-5">
+                  The solution was {GetCharacterById(accusation.suspect)?.name}{" "}
+                  with the {GetWeaponById(accusation.weapon)?.name} in the{" "}
+                  {GetRoomById(accusation.room)?.name}.
+                </Typography>
+                <div className="flex justify-center space-x-4 m-4">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </Card>
             )}
           </div>
           <Backdrop
@@ -364,47 +444,117 @@ export default function Game() {
               backgroundColor: "rgba(0, 0, 0, 0.9)",
             }}
             open={backdropOpen}
-            onClick={() => setBackdropOpen(false)}
+            onClick={closeBackdrop}
           >
-            <Typography variant="h6" component="div">
-              {info}
-            </Typography>
+            {accusation.character.length > 0 ? (
+              <main className="flex flex-col">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {info}
+                </Typography>
+                <div className="flex justify-center space-x-4 m-10">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </main>
+            ) : (
+              <Typography variant="h6" component="div" className="block mb-5">
+                {info}
+              </Typography>
+            )}
           </Backdrop>
           <div className="relative flex">
-            <Card
-              className="justify-center absolute -left-40 top-72"
-              sx={{ maxWidth: 200 }}
-              variant="outlined"
-            >
-              <Typography gutterBottom variant="h5" component="div">
-                Current Turn
-              </Typography>
-              <CardMedia
-                component="img"
-                height={10}
-                image={
-                  currentTurn
-                    ? GetCharacterById(currentTurn)?.image
-                    : "/characters/generic.webp"
-                }
-              />
-              <CardContent>
-                <Typography gutterBottom variant="h6" component="div">
-                  {!gameStarted ? (
-                    <b>Waiting for additional players!</b>
-                  ) : (
-                    <>
-                      <b>Available Actions</b>
-                      {currentActions.map((action) => (
-                        <ol key={action}>
-                          <li>{action}</li>
-                        </ol>
-                      ))}
-                    </>
-                  )}
+            {!winner && (
+              <Card
+                className="justify-center absolute -left-40 top-72"
+                sx={{ maxWidth: 200 }}
+                variant="outlined"
+              >
+                <Typography gutterBottom variant="h5" component="div">
+                  Current Turn
                 </Typography>
-              </CardContent>
-            </Card>
+                <CardMedia
+                  component="img"
+                  height={10}
+                  image={
+                    currentTurn
+                      ? GetCharacterById(currentTurn)?.image
+                      : "/characters/generic.webp"
+                  }
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h6" component="div">
+                    {!gameStarted ? (
+                      <b>Waiting for additional players!</b>
+                    ) : (
+                      <>
+                        <b>Available Actions</b>
+                        {currentActions.map((action) => (
+                          <ol key={action}>
+                            <li>{action}</li>
+                          </ol>
+                        ))}
+
+                        {currentActions.includes("Disprove") && (
+                          <>
+                            <Typography
+                              gutterBottom
+                              variant="subtitle1"
+                              component="div"
+                            >
+                              <br />
+                              <b>
+                                {GetCharacterById(suggestion.character)?.name}
+                                &apos;s Suggestion
+                              </b>
+                            </Typography>
+                            <div className="flex justify-center space-x-2">
+                              <ImagePortrait
+                                title={
+                                  GetCharacterById(suggestion.suspect)?.name
+                                }
+                                image={
+                                  GetCharacterById(suggestion.suspect)?.image
+                                }
+                                width={40}
+                                height={40}
+                              />
+                              <ImagePortrait
+                                title={GetWeaponById(suggestion.weapon)?.name}
+                                image={GetWeaponById(suggestion.weapon)?.image}
+                                width={40}
+                                height={40}
+                              />
+                              <ImagePortrait
+                                title={GetRoomById(suggestion.room)?.name}
+                                image={GetRoomById(suggestion.room)?.image}
+                                width={40}
+                                height={40}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
             <Board
               handleRoomClick={handleRoomClick}
               characterPositions={characterPositions}

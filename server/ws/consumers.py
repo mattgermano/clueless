@@ -288,7 +288,13 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             )
 
             if game.winner is not None:
-                win_event = {"type": "win", "player": game.winner}
+                win_event = {
+                    "type": "win",
+                    "character": game.winner,
+                    "suspect": event["suspect"],
+                    "weapon": event["weapon"],
+                    "room": event["room"],
+                }
                 await self.channel_layer.group_send(
                     event["game_id"],
                     {"type": "game_event", "message": json.dumps(win_event)},
@@ -296,6 +302,11 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                 return
 
         except RuntimeError as exc:
+            await self.channel_layer.group_send(
+                event["game_id"],
+                {"type": "game_event", "message": json.dumps(event)},
+            )
+
             await self.error(str(exc))
 
         await self.broadcast_turn(event["game_id"])
