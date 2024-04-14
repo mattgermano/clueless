@@ -13,7 +13,7 @@ import {
   GetCardsByCharacter,
   GetCharacterById,
 } from "@/components/utils/characters";
-import { WeaponPositions } from "@/components/utils/weapons";
+import { GetWeaponById, WeaponPositions } from "@/components/utils/weapons";
 import { SkipNext } from "@mui/icons-material";
 import {
   Alert,
@@ -29,6 +29,7 @@ import {
 import { useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
+import { ChatBox } from "@/components/chat/ChatBox";
 import { Message } from "@/components/chat/Message";
 
 interface EventObject {
@@ -89,6 +90,8 @@ export default function Game() {
     },
   );
 
+  const [counter, setCounter] = useState(0);
+
   function handleRoomClick(x: Number, y: Number) {
     if (joinId) {
       const event = {
@@ -144,6 +147,18 @@ export default function Game() {
         game_id: joinId,
       };
 
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleSendChat(chat: string) {
+    if (joinId) {
+      const event = {
+        type: "chat",
+        game_id: joinId,
+        sender: character,
+        message: chat,
+      };
       sendJsonMessage(event);
     }
   }
@@ -220,6 +235,16 @@ export default function Game() {
           // Create links for inviting other players and spectators
           if (event.join !== undefined) setJoinId(event.join);
           if (event.watch !== undefined) setWatchId(event.watch);
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "init",
+              message: "A new game has been created!",
+            },
+          ]);
           break;
 
         case "turn":
@@ -239,6 +264,16 @@ export default function Game() {
         case "start":
           setGameStarted(true);
           if (event.cards !== undefined) setCharacterCards(event.cards);
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "start",
+              message: "The game has started!",
+            },
+          ]);
           break;
 
         case "suggestion":
@@ -252,6 +287,19 @@ export default function Game() {
               weapon: event.weapon,
               room: event.room,
             });
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "suggestion",
+                message:
+                  `${GetCharacterById(currentTurn)?.name} suggests it was` +
+                  ` ${GetCharacterById(event.suspect)?.name} in the` +
+                  ` ${GetCardInfo(event.room)?.name} with the ${GetWeaponById(event.weapon)?.name}!`,
+              },
+            ]);
           }
           break;
 
@@ -261,29 +309,106 @@ export default function Game() {
             event.disprover !== undefined &&
             event.card !== undefined
           ) {
-            if (character === event.character) {
-              if (event.card.length === 0) {
-                setInfo(
-                  `${GetCharacterById(event.disprover)?.name} could not disprove your suggestion!`,
-                );
-              } else {
-                setInfo(
-                  `Your suggestion was disproven by ${GetCharacterById(event.disprover)?.name} with the ${GetCardInfo(event.card)?.name} card.`,
-                );
-              }
-              setBackdropOpen(true);
+            if (event.card.length === 0) {
+              setInfo(
+                `${GetCharacterById(event.disprover)?.name} could not disprove your suggestion!`,
+              );
+              setCounter(counter + 1);
+              setMessages((m) => [
+                ...m,
+                {
+                  id: counter,
+                  type: "system",
+                  event_type: "disprove",
+                  message:
+                    `${GetCharacterById(event.disprover)?.name}` +
+                    ` could not disprove the suggestion!`,
+                },
+              ]);
+            } else {
+              setInfo(
+                `Your suggestion was disproven by ${GetCharacterById(event.disprover)?.name} with the ${GetCardInfo(event.card)?.name} card.`,
+              );
+              setCounter(counter + 1);
+              let isSuggestor =
+                character == event.character || character == event.disprover;
+              let optionalStr = `with the ${GetCardInfo(event.card)?.name} card`;
+              setMessages((m) => [
+                ...m,
+                {
+                  id: counter,
+                  type: "system",
+                  event_type: "disprove",
+                  message:
+                    `${GetCharacterById(event.disprover)?.name}` +
+                    ` disproved the suggestion` +
+                    ` ${isSuggestor ? optionalStr : ""}!`,
+                },
+              ]);
             }
           }
           break;
 
+        case "accusation":
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "accusation",
+              message:
+                `${GetCharacterById(currentTurn)?.name} accuses` +
+                ` ${GetCharacterById(event.suspect)?.name} in the` +
+                ` ${GetCardInfo(event.room)?.name} with the ${GetWeaponById(event.weapon)?.name}!`,
+            },
+          ]);
+          break;
+
         case "chat":
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "player",
+              sender: event.sender,
+              isUser: event.sender == character,
+              message: event.message,
+            },
+          ]);
           break;
 
         case "win":
           if (event.player !== undefined) {
             setWinner(event.player);
             setGameStarted(false);
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "win",
+                message: `${GetCharacterById(event.player)?.name} has won the game!`,
+              },
+            ]);
           }
+          break;
+
+        case "lose":
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "lose",
+              message:
+                `${GetCharacterById(event.player)?.name} made a false` +
+                ` accusation and has lost the game!`,
+            },
+          ]);
           break;
 
         case "error":
@@ -324,6 +449,7 @@ export default function Game() {
 
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
+      <ChatBox messages={messages} handleSendChat={handleSendChat} />
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
         <div className="text-center">
           <Particles
