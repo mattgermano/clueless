@@ -327,11 +327,6 @@ export default function Game() {
           <h1 className="inline-flex font-extrabold text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
             Clue-Less
           </h1>
-          {!gameStarted && (
-            <Alert className="mb-2 justify-center" severity="info">
-              Waiting for additional players before starting game!
-            </Alert>
-          )}
           <Box
             sx={{
               display: "flex",
@@ -370,32 +365,40 @@ export default function Game() {
             <h1>{info}</h1>
           </Backdrop>
           <div className="relative flex">
-            {currentTurn && (
-              <Card
-                className="justify-center absolute -left-40 top-72"
-                sx={{ maxWidth: 200 }}
-                variant="outlined"
-              >
-                <Typography gutterBottom variant="h5" component="div">
-                  Current Turn
+            <Card
+              className="justify-center absolute -left-40 top-72"
+              sx={{ maxWidth: 200 }}
+              variant="outlined"
+            >
+              <Typography gutterBottom variant="h5" component="div">
+                Current Turn
+              </Typography>
+              <CardMedia
+                component="img"
+                height={10}
+                image={
+                  currentTurn
+                    ? GetCharacterById(currentTurn)?.image
+                    : "/characters/generic.webp"
+                }
+              />
+              <CardContent>
+                <Typography gutterBottom variant="h6" component="div">
+                  {!gameStarted ? (
+                    <b>Waiting for additional players!</b>
+                  ) : (
+                    <>
+                      <b>Available Actions</b>
+                      {currentActions.map((action) => (
+                        <ol key={action}>
+                          <li>{action}</li>
+                        </ol>
+                      ))}
+                    </>
+                  )}
                 </Typography>
-                <CardMedia
-                  component="img"
-                  height={10}
-                  image={GetCharacterById(currentTurn)?.image}
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h6" component="div">
-                    <b>Available Actions</b>
-                    {currentActions.map((action) => (
-                      <ol key={action}>
-                        <li>{action}</li>
-                      </ol>
-                    ))}
-                  </Typography>
-                </CardContent>
-              </Card>
-            )}
+              </CardContent>
+            </Card>
             <Board
               handleRoomClick={handleRoomClick}
               characterPositions={characterPositions}
@@ -432,7 +435,7 @@ export default function Game() {
                   <SkipNext fontSize="small" />
                 </Button>
               )}
-            <ClueSheet />
+            <ClueSheet character={character} characterCards={characterCards} />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">
             {characterCards &&

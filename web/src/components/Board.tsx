@@ -114,7 +114,7 @@ export default function Board({
   handleRoomClick,
 }: BoardProps) {
   const [firstTurnComplete, setFirstTurnComplete] = useState(false);
-  const displayedRooms = firstTurnComplete ? rooms : startingRooms;
+  const displayedRooms = firstTurnComplete ? startingRooms : startingRooms;
 
   useEffect(() => {
     let foundCharacterInStartingSquare = false;
@@ -138,7 +138,7 @@ export default function Board({
   }, [characterPositions]);
 
   return (
-    <Grid container spacing={1} columns={firstTurnComplete ? 50 : 70}>
+    <Grid container spacing={1} columns={firstTurnComplete ? 70 : 70}>
       {displayedRooms.map((room) => (
         <Grid key={`${room.title}-${room.x}-${room.y}`} xs={10}>
           <Square
