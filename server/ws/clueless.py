@@ -3,6 +3,8 @@ from copy import deepcopy
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple
 
+MAX_PLAYER_COUNT: int = 6
+
 clue_cards: Dict[str, List[str]] = {
     "suspects": [
         "miss_scarlett",
