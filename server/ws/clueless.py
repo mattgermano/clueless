@@ -309,12 +309,10 @@ class Clueless:
             (abs(x - x_current) > 1 or abs(y - y_current) > 1)
             or (abs(x - x_current) == 1 and abs(y - y_current) == 1)
         ):
-            raise RuntimeError(f"Invalid move by {character}!")
+            raise RuntimeError("Invalid move!")
 
         if new_position in hallways_positions and self.character_in_room(x, y):
-            raise RuntimeError(
-                f"Invalid move by {character}! Hallway is currently occupied."
-            )
+            raise RuntimeError("Invalid move! Hallway is currently occupied.")
 
         self.character_positions[character] = new_position
 

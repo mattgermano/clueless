@@ -353,16 +353,22 @@ export default function Game() {
           <div className="mb-2 mt-2">
             {winner && (
               <Alert className="justify-center" severity="success">
-                {winner} has won the game!
+                {GetCharacterById(winner)?.name} has won the game!
               </Alert>
             )}
           </div>
           <Backdrop
-            sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            sx={{
+              color: "#fff",
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              backgroundColor: "rgba(0, 0, 0, 0.9)",
+            }}
             open={backdropOpen}
             onClick={() => setBackdropOpen(false)}
           >
-            <h1>{info}</h1>
+            <Typography variant="h6" component="div">
+              {info}
+            </Typography>
           </Backdrop>
           <div className="relative flex">
             <Card

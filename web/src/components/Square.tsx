@@ -2,6 +2,7 @@ import { Button, Tooltip } from "@mui/material";
 import Image from "next/image";
 import ImagePortrait from "./ImagePortrait";
 import { Character } from "./utils/characters";
+import { Weapon } from "./utils/weapons"
 
 interface SquareProps {
   title: string;
@@ -10,7 +11,7 @@ interface SquareProps {
   y: Number;
   handleClick(x: Number, y: Number): void;
   characters?: Character[];
-  weapons?: Weapons[];
+  weapons?: Weapon[];
   gameStarted: Boolean;
   width?: number;
   height?: number;

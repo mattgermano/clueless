@@ -1,6 +1,7 @@
 import { Avatar, Box, ListItemText, MenuItem } from "@mui/material";
 
 export interface Weapon {
+  id: string;
   name: string;
   image: string;
 }
