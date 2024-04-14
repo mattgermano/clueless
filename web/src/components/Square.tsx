@@ -2,7 +2,7 @@ import { Button, Tooltip } from "@mui/material";
 import Image from "next/image";
 import ImagePortrait from "./ImagePortrait";
 import { Character } from "./utils/characters";
-import { Weapon } from "./utils/weapons"
+import { Weapon } from "./utils/weapons";
 
 interface SquareProps {
   title: string;
