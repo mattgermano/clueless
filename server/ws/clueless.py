@@ -152,7 +152,7 @@ class Clueless:
         """
         return self.player_count == len(self.characters)
 
-    def character_in_room(self, x, y) -> bool:
+    def character_in_room(self, x: int, y: int) -> bool:
         """Checks if a character is currently occupying a given room
 
         Parameters
