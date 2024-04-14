@@ -424,12 +424,14 @@ export default function Game() {
                 currentActions.includes("Accuse")
               }
             />
-            {currentActions.includes("End") && (
-              <Button variant="outlined" onClick={handleEndTurnClick}>
-                <span className="pr-2">End Turn</span>{" "}
-                <SkipNext fontSize="small" />
-              </Button>
-            )}
+            {gameStarted &&
+              currentTurn === character &&
+              currentActions.includes("End") && (
+                <Button variant="outlined" onClick={handleEndTurnClick}>
+                  <span className="pr-2">End Turn</span>{" "}
+                  <SkipNext fontSize="small" />
+                </Button>
+              )}
             <ClueSheet />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">

@@ -321,13 +321,18 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         except RuntimeError as exc:
             await self.error(str(exc))
 
-        # TODO: this does not work if there are 3 players, 2 of which have lost
         # No one was able to disprove the suggestion
         if game.turn["character"] == game.last_suggestion["character"]:
-            game.turn["actions"] = [
-                clueless.Action.Accuse.name,
-                clueless.Action.End.name,
-            ]
+            if len(game.losers) < (game.player_count - 1):
+                game.turn["actions"] = [
+                    clueless.Action.Accuse.name,
+                    clueless.Action.End.name,
+                ]
+            else:
+                game.turn["actions"] = [
+                    clueless.Action.Move.name,
+                    clueless.Action.Accuse.name,
+                ]
 
         await self.broadcast_turn(event["game_id"])
 

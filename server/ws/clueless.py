@@ -319,7 +319,7 @@ class Clueless:
         self.character_positions[character] = new_position
 
         if new_position not in hallways_positions:
-            self.turn["actions"] = [Action.Suggest.name]
+            self.turn["actions"] = [Action.Suggest.name, Action.Accuse.name]
         else:
             self.turn["actions"] = [Action.Move.name]
             if self.turn_number >= len(self.characters):
@@ -415,3 +415,5 @@ class Clueless:
 
             if self.turn["character"] == self.last_suggestion["suspect"]:
                 self.turn["actions"].append(Action.Suggest.name)
+
+        self.disprover = disprover
