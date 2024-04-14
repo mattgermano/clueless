@@ -331,6 +331,17 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         await self.send(text_data=message)
 
+    @require_keys(["game_id", "message", "sender"])
+    async def chat(self, event: Dict[str, Any]) -> None:
+        """Recieves a chat message from a user and broadcasts to all other users.
+
+        Parameters
+        ---------
+        event : Dict[str, Any]
+            The message event
+        """
+        await self.channel_layer.group_send(event["game_id"], event)
+
     async def receive(self, text_data: str) -> None:
         """Receives a message from the Websocket
 
@@ -355,6 +366,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "suggestion": self.suggest,
             "accusation": self.accuse,
             "query_game": self.query_game,
+            "chat": self.chat,
         }
 
         # Get the handler based on the event type
