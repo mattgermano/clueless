@@ -53,7 +53,7 @@ export const Rooms = [
   },
 ];
 
-export function GetRoomById(id: string) {
+export function GetRoomById(id: string | undefined) {
   for (const room of Rooms) {
     if (room.id === id) {
       return room;

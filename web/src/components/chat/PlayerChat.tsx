@@ -2,13 +2,11 @@ import { Box, TextField } from "@mui/material";
 import { useState } from "react";
 import { PlayerMessage, PlayerMessageProps } from "./Message";
 interface PlayerChatProps {
-  children: React.ReactNode;
   messages: PlayerMessageProps[];
   handleSendChat(s: string): void;
 }
 let systemMessageId = 1;
 export default function PlayerChat({
-  children,
   messages,
   handleSendChat,
 }: PlayerChatProps) {

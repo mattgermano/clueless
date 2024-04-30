@@ -49,6 +49,7 @@ interface EventObject {
   room?: string;
   disprover?: string;
   card?: string;
+  sender?: string;
   actions?: string[];
 }
 
@@ -384,11 +385,6 @@ export default function Game() {
               room: event.room,
             });
 
-            setInfo(
-              `${GetCharacterById(event.character)?.name} has made a false accusation! They accused ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
-            );
-            setBackdropOpen(true);
-
             setCounter(counter + 1);
             setMessages((m) => [
               ...m,
@@ -440,7 +436,7 @@ export default function Game() {
                 id: counter,
                 type: "system",
                 event_type: "win",
-                message: `${GetCharacterById(event.player)?.name} has won the game!`,
+                message: `${GetCharacterById(event.character)?.name} has won the game!`,
               },
             ]);
           }
@@ -459,6 +455,12 @@ export default function Game() {
                 ` accusation and has lost the game!`,
             },
           ]);
+
+          setInfo(
+            `${GetCharacterById(event.player)?.name} has made a false accusation! They accused ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+          );
+          setBackdropOpen(true);
+
           break;
 
         case "error":
@@ -470,7 +472,8 @@ export default function Game() {
           throw new Error(`Unsupported event type: ${event.type}.`);
       }
     }
-  }, [lastJsonMessage, character]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastJsonMessage]);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",
@@ -575,7 +578,7 @@ export default function Game() {
             open={backdropOpen}
             onClick={closeBackdrop}
           >
-            {accusation.character.length > 0 ? (
+            {accusation.character.length > 0 && !winner ? (
               <main className="flex flex-col">
                 <Typography variant="h6" component="div" className="block mb-5">
                   {info}
@@ -726,13 +729,18 @@ export default function Game() {
             {characterCards &&
               character &&
               GetCardsByCharacter(character, characterCards).map((card) => {
+                let cards = {
+                  suspect: suggestion.suspect,
+                  weapon: suggestion.weapon,
+                  room: suggestion.room,
+                };
                 let classes = "";
                 if (
                   currentTurn === character &&
                   currentActions.includes("Disprove")
                 ) {
                   classes = "ring-4 ring-red-500";
-                  if (Object.values(suggestion).includes(card)) {
+                  if (Object.values(cards).includes(card)) {
                     classes = "ring-4 ring-green-500";
                   }
                 }
@@ -746,7 +754,7 @@ export default function Game() {
                     disabled={
                       currentTurn !== character ||
                       !currentActions.includes("Disprove") ||
-                      !Object.values(suggestion).includes(card)
+                      !Object.values(cards).includes(card)
                     }
                   >
                     <Card
@@ -777,9 +785,14 @@ export default function Game() {
             characterCards &&
             currentTurn === character &&
             currentActions.includes("Disprove") &&
-            !GetCardsByCharacter(character, characterCards).some((card) =>
-              Object.values(suggestion).includes(card),
-            ) && (
+            !GetCardsByCharacter(character, characterCards).some((card) => {
+              let cards = {
+                suspect: suggestion.suspect,
+                weapon: suggestion.weapon,
+                room: suggestion.room,
+              };
+              return Object.values(cards).includes(card);
+            }) && (
               <div className="mt-2">
                 <Button variant="outlined" onClick={() => handleCardClick("")}>
                   <span className="pr-2">Pass Turn</span>{" "}

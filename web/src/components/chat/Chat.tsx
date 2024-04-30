@@ -26,8 +26,16 @@ export const Chat = ({ messages, handleSendChat }: ChatProps) => {
   >([]);
   const [radioSelection, setRadioSelection] = useState("game_event");
   useEffect(() => {
-    setGameEventMessages(messages.filter((msg) => msg.type === "system"));
-    setChatMessages(messages.filter((msg) => msg.type === "player"));
+    setGameEventMessages(
+      messages.filter(
+        (msg): msg is SystemMessageProps => msg.type === "system",
+      ),
+    );
+    setChatMessages(
+      messages.filter(
+        (msg): msg is PlayerMessageProps => msg.type === "player",
+      ),
+    );
   }, [messages]);
 
   return (

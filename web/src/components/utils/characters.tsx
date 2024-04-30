@@ -106,7 +106,7 @@ export const AvailableCharacterSelections = ({
   );
 };
 
-export function GetCharacterById(id: string) {
+export function GetCharacterById(id: string | undefined) {
   for (const character of Characters) {
     if (character.id === id) {
       return character;

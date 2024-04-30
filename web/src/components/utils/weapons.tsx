@@ -71,7 +71,7 @@ export const WeaponSelections = Weapons.map((weapon) => (
   </MenuItem>
 ));
 
-export function GetWeaponById(id: string) {
+export function GetWeaponById(id: string | undefined) {
   for (const weapon of Weapons) {
     if (weapon.id === id) {
       return weapon;
