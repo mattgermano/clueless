@@ -53,7 +53,7 @@ export default function Square({
                 <div key={character.id} className={`absolute`}>
                   <ImagePortrait
                     title={character.name}
-                    image={character.image}
+                    image={character.image["Classic"]}
                     width={50}
                     height={50}
                   />
@@ -94,7 +94,7 @@ export default function Square({
                     <div key={character.id} className={`absolute ${position}`}>
                       <ImagePortrait
                         title={character.name}
-                        image={character.image}
+                        image={character.image["Classic"]}
                         width={50}
                         height={50}
                       />
@@ -129,7 +129,7 @@ export default function Square({
                     <div key={weapon.id} className={`absolute ${position}`}>
                       <ImagePortrait
                         title={weapon.name}
-                        image={weapon.image}
+                        image={weapon.image["Classic"]}
                         width={40}
                         height={40}
                       />

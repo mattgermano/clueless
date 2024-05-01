@@ -1,3 +1,4 @@
+import { Theme } from "@/app/game/page";
 import { ArticleOutlined } from "@mui/icons-material";
 import {
   Button,
@@ -108,9 +109,14 @@ const initialRoomCheckboxStates: RoomCheckboxStates = {
 interface ClueCardProps {
   character?: string | null;
   characterCards?: CharacterCards;
+  theme: Theme;
 }
 
-export default function ClueCard({ character, characterCards }: ClueCardProps) {
+export default function ClueCard({
+  character,
+  characterCards,
+  theme,
+}: ClueCardProps) {
   const [open, setOpen] = useState(false);
   const [suspectCheckboxStates, setSuspectCheckboxStates] = useState(
     initialSuspectCheckboxStates,
@@ -192,7 +198,7 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={character.name}
-                        image={character.image}
+                        image={character.image[theme]}
                         width={45}
                         height={45}
                       />
@@ -244,7 +250,7 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={weapon.name}
-                        image={weapon.image}
+                        image={weapon.image[theme]}
                         width={45}
                         height={45}
                       />
@@ -294,7 +300,7 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={room.name}
-                        image={room.image}
+                        image={room.image[theme]}
                         width={45}
                         height={45}
                       />

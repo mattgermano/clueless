@@ -53,7 +53,10 @@ interface EventObject {
   actions?: string[];
 }
 
+export type Theme = "Classic" | "8-Bit" | "Medieval";
+
 export default function Game() {
+  const [theme, setTheme] = useState<Theme>("Classic");
   const [info, setInfo] = useState("");
   const [error, setError] = useState("");
   const [winner, setWinner] = useState("");
@@ -193,6 +196,14 @@ export default function Game() {
     });
     setBackdropOpen(false);
   }
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(document.location.search);
+    const boardTheme = searchParams.get("theme");
+    if (boardTheme) {
+      setTheme(boardTheme as Theme);
+    }
+  }, []);
 
   useEffect(() => {
     let event = {};
@@ -549,19 +560,19 @@ export default function Game() {
                 <div className="flex justify-center space-x-4 m-4">
                   <ImagePortrait
                     title={GetCharacterById(accusation.suspect)?.name}
-                    image={GetCharacterById(accusation.suspect)?.image}
+                    image={GetCharacterById(accusation.suspect)?.image[theme]}
                     width={125}
                     height={125}
                   />
                   <ImagePortrait
                     title={GetWeaponById(accusation.weapon)?.name}
-                    image={GetWeaponById(accusation.weapon)?.image}
+                    image={GetWeaponById(accusation.weapon)?.image[theme]}
                     width={125}
                     height={125}
                   />
                   <ImagePortrait
                     title={GetRoomById(accusation.room)?.name}
-                    image={GetRoomById(accusation.room)?.image}
+                    image={GetRoomById(accusation.room)?.image[theme]}
                     width={125}
                     height={125}
                   />
@@ -586,19 +597,19 @@ export default function Game() {
                 <div className="flex justify-center space-x-4 m-10">
                   <ImagePortrait
                     title={GetCharacterById(accusation.suspect)?.name}
-                    image={GetCharacterById(accusation.suspect)?.image}
+                    image={GetCharacterById(accusation.suspect)?.image[theme]}
                     width={125}
                     height={125}
                   />
                   <ImagePortrait
                     title={GetWeaponById(accusation.weapon)?.name}
-                    image={GetWeaponById(accusation.weapon)?.image}
+                    image={GetWeaponById(accusation.weapon)?.image[theme]}
                     width={125}
                     height={125}
                   />
                   <ImagePortrait
                     title={GetRoomById(accusation.room)?.name}
-                    image={GetRoomById(accusation.room)?.image}
+                    image={GetRoomById(accusation.room)?.image[theme]}
                     width={125}
                     height={125}
                   />
@@ -625,7 +636,7 @@ export default function Game() {
                   height={10}
                   image={
                     currentTurn
-                      ? GetCharacterById(currentTurn)?.image
+                      ? GetCharacterById(currentTurn)?.image[theme]
                       : "/characters/generic.webp"
                   }
                 />
@@ -661,20 +672,26 @@ export default function Game() {
                                   GetCharacterById(suggestion.suspect)?.name
                                 }
                                 image={
-                                  GetCharacterById(suggestion.suspect)?.image
+                                  GetCharacterById(suggestion.suspect)?.image[
+                                    theme
+                                  ]
                                 }
                                 width={40}
                                 height={40}
                               />
                               <ImagePortrait
                                 title={GetWeaponById(suggestion.weapon)?.name}
-                                image={GetWeaponById(suggestion.weapon)?.image}
+                                image={
+                                  GetWeaponById(suggestion.weapon)?.image[theme]
+                                }
                                 width={40}
                                 height={40}
                               />
                               <ImagePortrait
                                 title={GetRoomById(suggestion.room)?.name}
-                                image={GetRoomById(suggestion.room)?.image}
+                                image={
+                                  GetRoomById(suggestion.room)?.image[theme]
+                                }
                                 width={40}
                                 height={40}
                               />
@@ -696,6 +713,7 @@ export default function Game() {
                 currentTurn === character &&
                 currentActions.includes("Move")
               }
+              theme={theme}
             />
           </div>
           <div className="inline-flex mt-2 justify-center space-x-4">
@@ -714,6 +732,7 @@ export default function Game() {
                 currentTurn === character &&
                 currentActions.includes("Accuse")
               }
+              theme={theme}
             />
             {gameStarted &&
               currentTurn === character &&
@@ -723,7 +742,11 @@ export default function Game() {
                   <SkipNext fontSize="small" />
                 </Button>
               )}
-            <ClueSheet character={character} characterCards={characterCards} />
+            <ClueSheet
+              character={character}
+              characterCards={characterCards}
+              theme={theme}
+            />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">
             {characterCards &&
@@ -765,7 +788,7 @@ export default function Game() {
                       <CardMedia
                         component="img"
                         height={10}
-                        image={GetCardInfo(card)?.image}
+                        image={GetCardInfo(card)?.image[theme]}
                       />
                       <CardContent>
                         <Typography
