@@ -33,6 +33,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { ChatBox } from "@/components/chat/ChatBox";
 import { Message } from "@/components/chat/Message";
+import MusicSelection from "@/components/MusicSelection";
 
 interface EventObject {
   type: string;
@@ -747,6 +748,7 @@ export default function Game() {
               characterCards={characterCards}
               theme={theme}
             />
+            <MusicSelection />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">
             {characterCards &&
