@@ -317,11 +317,30 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         # game.accuse throws RuntimeError on false accusation
         except RuntimeError as _:
-            lose_event = {"type": "lose", "player": event["character"]}
+            lose_event = {
+                "type": "lose",
+                "player": event["character"],
+                "suspect": event["suspect"],
+                "weapon": event["weapon"],
+                "room": event["room"],
+            }
             await self.channel_layer.group_send(
                 event["game_id"],
                 {"type": "game_event", "message": json.dumps(lose_event)},
             )
+
+            # When all players have made a false accusation, end the game
+            if len(game.losers) == game.player_count:
+                end_game_event = {
+                    "type": "end_game",
+                    "suspect": game.solution["suspect"],
+                    "weapon": game.solution["weapon"],
+                    "room": game.solution["room"],
+                }
+                await self.channel_layer.group_send(
+                    event["game_id"],
+                    {"type": "game_event", "message": json.dumps(end_game_event)},
+                )
 
         await self.broadcast_turn(event["game_id"])
 
@@ -348,16 +367,10 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         # No one was able to disprove the suggestion
         if game.turn["character"] == game.last_suggestion["character"]:
-            if len(game.losers) < (game.player_count - 1):
-                game.turn["actions"] = [
-                    clueless.Action.Accuse.name,
-                    clueless.Action.End.name,
-                ]
-            else:
-                game.turn["actions"] = [
-                    clueless.Action.Move.name,
-                    clueless.Action.Accuse.name,
-                ]
+            game.turn["actions"] = [
+                clueless.Action.Accuse.name,
+                clueless.Action.End.name,
+            ]
 
         await self.broadcast_turn(event["game_id"])
 
@@ -388,7 +401,20 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             return
 
         game.next_turn()
-        game.turn["actions"] = [clueless.Action.Move.name, clueless.Action.Accuse.name]
+        game.turn["actions"] = [clueless.Action.Move.name]
+        position_x, position_y = game.character_positions[game.turn["character"]]
+        if (
+            position_x,
+            position_y,
+        ) not in clueless.hallways_positions and game.last_positions[
+            game.turn["character"]
+        ] != (
+            position_x,
+            position_y,
+        ):
+            game.turn["actions"].append(clueless.Action.Suggest.name)
+
+        game.turn["actions"].append(clueless.Action.Accuse.name)
 
         await self.broadcast_turn(event["game_id"])
 

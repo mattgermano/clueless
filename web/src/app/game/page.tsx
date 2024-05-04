@@ -63,6 +63,7 @@ export default function Game() {
   const [winner, setWinner] = useState("");
   const [joinId, setJoinId] = useState<string | null>("");
   const [watchId, setWatchId] = useState("");
+  const [gameEnded, setGameEnded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
@@ -188,14 +189,18 @@ export default function Game() {
     }
   }
 
-  function closeBackdrop() {
-    setAccusation({
-      character: "",
-      suspect: "",
-      weapon: "",
-      room: "",
-    });
-    setBackdropOpen(false);
+  function closeBackdrop(event: any) {
+    if (gameEnded) {
+      event.stopPropagation();
+    } else {
+      setAccusation({
+        character: "",
+        suspect: "",
+        weapon: "",
+        room: "",
+      });
+      setBackdropOpen(false);
+    }
   }
 
   useEffect(() => {
@@ -426,6 +431,7 @@ export default function Game() {
             },
           ]);
           break;
+
         case "win":
           if (
             event.character !== undefined &&
@@ -441,6 +447,9 @@ export default function Game() {
             });
             setWinner(event.character);
             setGameStarted(false);
+            setGameEnded(true);
+            setInfo("");
+            setBackdropOpen(true);
             setCounter(counter + 1);
             setMessages((m) => [
               ...m,
@@ -473,6 +482,28 @@ export default function Game() {
           );
           setBackdropOpen(true);
 
+          break;
+
+        case "end_game":
+          if (
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setAccusation({
+              character: event.suspect,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+            setCurrentTurn(undefined);
+            setGameEnded(true);
+            setGameStarted(false);
+            setInfo(
+              `All players have made false accusations! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+            );
+            setBackdropOpen(true);
+          }
           break;
 
         case "error":
@@ -547,40 +578,6 @@ export default function Game() {
               />
             )}
           </Box>
-          <div className="mb-2 mt-2">
-            {winner && (
-              <Card className="flex flex-col" variant="outlined">
-                <Typography variant="h6" component="div" className="block mb-5">
-                  {GetCharacterById(winner)?.name} has won the game!
-                </Typography>
-                <Typography variant="h6" component="div" className="block mb-5">
-                  The solution was {GetCharacterById(accusation.suspect)?.name}{" "}
-                  with the {GetWeaponById(accusation.weapon)?.name} in the{" "}
-                  {GetRoomById(accusation.room)?.name}.
-                </Typography>
-                <div className="flex justify-center space-x-4 m-4">
-                  <ImagePortrait
-                    title={GetCharacterById(accusation.suspect)?.name}
-                    image={GetCharacterById(accusation.suspect)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                  <ImagePortrait
-                    title={GetWeaponById(accusation.weapon)?.name}
-                    image={GetWeaponById(accusation.weapon)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                  <ImagePortrait
-                    title={GetRoomById(accusation.room)?.name}
-                    image={GetRoomById(accusation.room)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                </div>
-              </Card>
-            )}
-          </div>
           <Backdrop
             sx={{
               color: "#fff",
@@ -621,9 +618,39 @@ export default function Game() {
                 {info}
               </Typography>
             )}
+            {winner && (
+              <div className="flex flex-col">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {GetCharacterById(winner)?.name} has won the game! The
+                  solution was {GetCharacterById(accusation.suspect)?.name} with
+                  the {GetWeaponById(accusation.weapon)?.name} in the{" "}
+                  {GetRoomById(accusation.room)?.name}.
+                </Typography>
+                <div className="flex justify-center space-x-4 m-4">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </div>
+            )}
           </Backdrop>
           <div className="relative flex">
-            {!winner && (
+            {!winner && !gameEnded && (
               <Card
                 className="justify-center absolute -left-40 top-72"
                 sx={{ maxWidth: 200 }}
