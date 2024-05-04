@@ -13,7 +13,7 @@ export default function PlayerChat({
   const [chatMessage, setChatMessage] = useState<string>("");
   return (
     <>
-      <Box height="calc(100% - 80px)">
+      <Box className="text-left" height="calc(100% - 80px)">
         {messages.map((msg) => (
           <PlayerMessage
             id={1}
@@ -25,7 +25,13 @@ export default function PlayerChat({
           ></PlayerMessage>
         ))}
       </Box>
-      <Box height={80} justifyContent={"left"} width="90%" display="flex" m="20px">
+      <Box
+        height={80}
+        justifyContent={"left"}
+        width="90%"
+        display="flex"
+        m="20px"
+      >
         <TextField
           label="Send a message..."
           value={chatMessage}

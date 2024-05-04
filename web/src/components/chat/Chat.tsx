@@ -2,9 +2,9 @@
 import {
   FormControl,
   FormControlLabel,
-  FormLabel,
   Radio,
   RadioGroup,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
@@ -41,7 +41,7 @@ export const Chat = ({ messages, handleSendChat }: ChatProps) => {
   return (
     <>
       <FormControl>
-        <FormLabel>Chat Rooms</FormLabel>
+        <Typography variant="h6">Chat Rooms</Typography>
         <RadioGroup
           row
           defaultValue="game_event"

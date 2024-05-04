@@ -545,7 +545,6 @@ export default function Game() {
 
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
-      <ChatBox messages={messages} handleSendChat={handleSendChat} />
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
         <div className="text-center">
           <Particles
@@ -770,6 +769,7 @@ export default function Game() {
                   <SkipNext fontSize="small" />
                 </Button>
               )}
+            <ChatBox messages={messages} handleSendChat={handleSendChat} />
             <ClueSheet
               character={character}
               characterCards={characterCards}
