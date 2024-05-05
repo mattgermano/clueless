@@ -1,16 +1,21 @@
-import { Box, Drawer, Paper } from "@mui/material";
-import { useEffect } from "react";
+import { ChatOutlined } from "@mui/icons-material";
+import { Button, Drawer, Paper } from "@mui/material";
+import { useEffect, useState } from "react";
 import { Chat, ChatProps } from "./Chat";
 
 export const ChatBox = ({ messages, handleSendChat }: ChatProps) => {
   useEffect(() => {}, [messages]);
+  const [open, setOpen] = useState(true);
   return (
-    <Box component="nav" sx={{ display: "flex" }}>
+    <div>
+      <Button variant="outlined" onClick={() => setOpen(!open)}>
+        <span className="pr-2">Chat</span> <ChatOutlined fontSize="small" />
+      </Button>
       <Drawer
-        ModalProps={{ keepMounted: true }}
-        variant="permanent"
         anchor="right"
-        open
+        variant="persistent"
+        open={open}
+        onClose={() => setOpen(false)}
       >
         <Paper
           sx={{
@@ -25,6 +30,6 @@ export const ChatBox = ({ messages, handleSendChat }: ChatProps) => {
           <Chat messages={messages} handleSendChat={handleSendChat} />
         </Paper>
       </Drawer>
-    </Box>
+    </div>
   );
 };

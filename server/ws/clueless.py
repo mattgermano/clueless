@@ -102,6 +102,7 @@ class Clueless:
             "lead_pipe": (-1, -1),
             "wrench": (-1, -1),
         }
+        self.started = False
         self.turn_number = 1
         self.disprover = None
         self.last_suggestion = {}
@@ -109,6 +110,7 @@ class Clueless:
         self.clue_cards = deepcopy(clue_cards)
         self.turn = {"character": "", "actions": [Action.NONE.name]}
         self.losers = []
+        self.last_positions = {}
         self.winner: Optional[str] = None
 
     def add_character(self, character: str) -> None:
@@ -162,6 +164,8 @@ class Clueless:
 
                 self.turn["character"] = self.characters[0]
                 self.turn["actions"] = [Action.Move.name]
+
+                self.started = True
         else:
             raise RuntimeError("Game is currently full!")
 
@@ -308,6 +312,7 @@ class Clueless:
         if not is_secret_passage and (
             (abs(x - x_current) > 1 or abs(y - y_current) > 1)
             or (abs(x - x_current) == 1 and abs(y - y_current) == 1)
+            or new_position == (x_current, y_current)
         ):
             raise RuntimeError("Invalid move!")
 
@@ -315,15 +320,19 @@ class Clueless:
             raise RuntimeError("Invalid move! Hallway is currently occupied.")
 
         self.character_positions[character] = new_position
+        self.last_positions[character] = new_position
 
         if new_position not in hallways_positions:
             self.turn["actions"] = [Action.Suggest.name, Action.Accuse.name]
         else:
-            self.turn["actions"] = [Action.Move.name]
-            if self.turn_number >= len(self.characters):
-                self.turn["actions"].append(Action.Accuse.name)
-
-            self.next_turn()
+            if self.turn_number > len(self.characters):
+                self.turn["actions"] = [Action.Accuse.name, Action.End.name]
+            elif self.turn_number == len(self.characters):
+                self.turn["actions"] = [Action.Move.name, Action.Accuse.name]
+                self.next_turn()
+            else:
+                self.turn["actions"] = [Action.Move.name]
+                self.next_turn()
 
     def suggest(self, character: str, suspect: str, weapon: str) -> None:
         """Processes a suggestion
@@ -370,6 +379,10 @@ class Clueless:
             The room being accused
         """
         self.next_turn()
+        position_x, position_y = self.character_positions[self.turn["character"]]
+        if (position_x, position_y) in hallways_positions:
+            self.turn["actions"] = [Action.Move.name, Action.Accuse.name]
+
         if (
             suspect == self.solution["suspect"]
             and weapon == self.solution["weapon"]
@@ -402,16 +415,7 @@ class Clueless:
 
         # Successfully disproved the suggestion
         if card in list(self.last_suggestion.values()):
-            self.turn["character"] = self.characters[
-                (self.characters.index(self.last_suggestion["character"]) + 1)
-                % len(self.characters)
-            ]
-            while self.turn["character"] in self.losers:
-                self.next_turn()
-
-            self.turn["actions"] = [Action.Move.name, Action.Accuse.name]
-
-            if self.turn["character"] == self.last_suggestion["suspect"]:
-                self.turn["actions"].append(Action.Suggest.name)
+            self.turn["character"] = self.last_suggestion["character"]
+            self.turn["actions"] = [Action.Accuse.name, Action.End.name]
 
         self.disprover = disprover

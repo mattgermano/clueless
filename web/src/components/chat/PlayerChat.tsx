@@ -1,4 +1,5 @@
-import { Box, TextField } from "@mui/material";
+import { SendOutlined } from "@mui/icons-material";
+import { Box, Button, TextField } from "@mui/material";
 import { useState } from "react";
 import { PlayerMessage, PlayerMessageProps } from "./Message";
 interface PlayerChatProps {
@@ -13,7 +14,7 @@ export default function PlayerChat({
   const [chatMessage, setChatMessage] = useState<string>("");
   return (
     <>
-      <Box height="calc(100% - 80px)">
+      <Box className="text-left" height="calc(100% - 80px)">
         {messages.map((msg) => (
           <PlayerMessage
             id={1}
@@ -25,7 +26,7 @@ export default function PlayerChat({
           ></PlayerMessage>
         ))}
       </Box>
-      <Box height={80} justifyContent={"left"} width="90%" display="flex" m="20px">
+      <Box justifyContent={"left"} display="flex" m="20px">
         <TextField
           label="Send a message..."
           value={chatMessage}
@@ -38,8 +39,15 @@ export default function PlayerChat({
               setChatMessage("");
             }
           }}
-          sx={{ height: 60 }}
         />
+        <Button
+          onClick={() => {
+            handleSendChat(chatMessage);
+            setChatMessage("");
+          }}
+        >
+          <SendOutlined />
+        </Button>
       </Box>
     </>
   );

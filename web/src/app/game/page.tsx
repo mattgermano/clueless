@@ -33,6 +33,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { ChatBox } from "@/components/chat/ChatBox";
 import { Message } from "@/components/chat/Message";
+import MusicSelection from "@/components/MusicSelection";
 
 interface EventObject {
   type: string;
@@ -50,6 +51,7 @@ interface EventObject {
   disprover?: string;
   card?: string;
   sender?: string;
+  reason?: string;
   actions?: string[];
 }
 
@@ -62,6 +64,7 @@ export default function Game() {
   const [winner, setWinner] = useState("");
   const [joinId, setJoinId] = useState<string | null>("");
   const [watchId, setWatchId] = useState("");
+  const [gameEnded, setGameEnded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
@@ -187,14 +190,18 @@ export default function Game() {
     }
   }
 
-  function closeBackdrop() {
-    setAccusation({
-      character: "",
-      suspect: "",
-      weapon: "",
-      room: "",
-    });
-    setBackdropOpen(false);
+  function closeBackdrop(event: any) {
+    if (gameEnded) {
+      event.stopPropagation();
+    } else {
+      setAccusation({
+        character: "",
+        suspect: "",
+        weapon: "",
+        room: "",
+      });
+      setBackdropOpen(false);
+    }
   }
 
   useEffect(() => {
@@ -289,6 +296,21 @@ export default function Game() {
           }
           if (event.weapon_positions !== undefined) {
             setWeaponPositions(event.weapon_positions);
+          }
+          break;
+
+        case "join":
+          if (event.character !== undefined) {
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "join",
+                message: `${GetCharacterById(event.character)?.name} joined the game!`,
+              },
+            ]);
           }
           break;
 
@@ -425,6 +447,7 @@ export default function Game() {
             },
           ]);
           break;
+
         case "win":
           if (
             event.character !== undefined &&
@@ -440,6 +463,9 @@ export default function Game() {
             });
             setWinner(event.character);
             setGameStarted(false);
+            setGameEnded(true);
+            setInfo("");
+            setBackdropOpen(true);
             setCounter(counter + 1);
             setMessages((m) => [
               ...m,
@@ -448,6 +474,21 @@ export default function Game() {
                 type: "system",
                 event_type: "win",
                 message: `${GetCharacterById(event.character)?.name} has won the game!`,
+              },
+            ]);
+          }
+          break;
+
+        case "move":
+          if (event.character !== undefined && event.room !== undefined) {
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "move",
+                message: `${GetCharacterById(event.character)?.name} moved to the ${event.room === "Hallway" ? event.room : GetRoomById(event.room)?.name}!`,
               },
             ]);
           }
@@ -472,6 +513,48 @@ export default function Game() {
           );
           setBackdropOpen(true);
 
+          break;
+
+        case "end_game":
+          if (
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined &&
+            event.reason !== undefined
+          ) {
+            setAccusation({
+              character: event.suspect,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+            setCurrentTurn(undefined);
+            setGameEnded(true);
+            setGameStarted(false);
+            if (event.reason === "false_accusations") {
+              setInfo(
+                `All players have made false accusations! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+              );
+            } else if (event.reason === "not_enough_players") {
+              setInfo(
+                `Too many players have disconnected! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+              );
+            }
+            setBackdropOpen(true);
+          }
+          break;
+
+        case "disconnect":
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "disconnect",
+              message: `${GetCharacterById(event.character)?.name} disconnected from the game!`,
+            },
+          ]);
           break;
 
         case "error":
@@ -513,7 +596,6 @@ export default function Game() {
 
   return (
     <main className="relative min-h-screen flex flex-col justify-center bg-slate-900 overflow-hidden">
-      <ChatBox messages={messages} handleSendChat={handleSendChat} />
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6 py-24">
         <div className="text-center">
           <Particles
@@ -546,40 +628,6 @@ export default function Game() {
               />
             )}
           </Box>
-          <div className="mb-2 mt-2">
-            {winner && (
-              <Card className="flex flex-col" variant="outlined">
-                <Typography variant="h6" component="div" className="block mb-5">
-                  {GetCharacterById(winner)?.name} has won the game!
-                </Typography>
-                <Typography variant="h6" component="div" className="block mb-5">
-                  The solution was {GetCharacterById(accusation.suspect)?.name}{" "}
-                  with the {GetWeaponById(accusation.weapon)?.name} in the{" "}
-                  {GetRoomById(accusation.room)?.name}.
-                </Typography>
-                <div className="flex justify-center space-x-4 m-4">
-                  <ImagePortrait
-                    title={GetCharacterById(accusation.suspect)?.name}
-                    image={GetCharacterById(accusation.suspect)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                  <ImagePortrait
-                    title={GetWeaponById(accusation.weapon)?.name}
-                    image={GetWeaponById(accusation.weapon)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                  <ImagePortrait
-                    title={GetRoomById(accusation.room)?.name}
-                    image={GetRoomById(accusation.room)?.image[theme]}
-                    width={125}
-                    height={125}
-                  />
-                </div>
-              </Card>
-            )}
-          </div>
           <Backdrop
             sx={{
               color: "#fff",
@@ -620,9 +668,39 @@ export default function Game() {
                 {info}
               </Typography>
             )}
+            {winner && (
+              <div className="flex flex-col">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {GetCharacterById(winner)?.name} has won the game! The
+                  solution was {GetCharacterById(accusation.suspect)?.name} with
+                  the {GetWeaponById(accusation.weapon)?.name} in the{" "}
+                  {GetRoomById(accusation.room)?.name}.
+                </Typography>
+                <div className="flex justify-center space-x-4 m-4">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image[theme]}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </div>
+            )}
           </Backdrop>
           <div className="relative flex">
-            {!winner && (
+            {!winner && !gameEnded && (
               <Card
                 className="justify-center absolute -left-40 top-72"
                 sx={{ maxWidth: 200 }}
@@ -742,11 +820,13 @@ export default function Game() {
                   <SkipNext fontSize="small" />
                 </Button>
               )}
+            <ChatBox messages={messages} handleSendChat={handleSendChat} />
             <ClueSheet
               character={character}
               characterCards={characterCards}
               theme={theme}
             />
+            <MusicSelection />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">
             {characterCards &&

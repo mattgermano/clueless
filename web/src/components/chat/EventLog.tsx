@@ -8,7 +8,7 @@ interface EventLogProps {
 let systemMessageId = 1;
 export default function EventLog({ messages }: EventLogProps) {
   return (
-    <Box sx={{ overflow: "auto" }}>
+    <Box className="text-left" sx={{ overflow: "auto" }}>
       {messages.map((msg) => (
         <SystemMessage
           id={1}
