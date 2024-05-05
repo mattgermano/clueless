@@ -60,6 +60,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                         "character": GAME_CHARACTERS[game_id][self.channel_name],
                     }
 
+                    manager.Manager.save_disconnect(game_id, disconnect_event)
+
                     await self.channel_layer.group_send(
                         game_id,
                         {"type": "game_event", "message": json.dumps(disconnect_event)},
@@ -84,6 +86,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                             "weapon": game.solution["weapon"],
                             "room": game.solution["room"],
                         }
+
+                        manager.Manager.save_end_game(game_id, end_game_event)
 
                         await self.channel_layer.group_send(
                             game_id,
@@ -141,6 +145,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event["character_positions"] = character_positions
         event["weapon_positions"] = weapon_positions
 
+        manager.Manager.update_positions(game_id, event)
+
         await self.channel_layer.group_send(
             game_id, {"type": "game_event", "message": json.dumps(event)}
         )
@@ -164,6 +170,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "character": game.turn["character"],
             "actions": game.turn["actions"],
         }
+
+        manager.Manager.save_turn(game_id, event)
 
         await self.channel_layer.group_send(
             game_id, {"type": "game_event", "message": json.dumps(event)}
@@ -196,15 +204,18 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         GAME_CHARACTERS[join_key][self.channel_name] = event["character"]
 
         # Send the access token to the browser of the first player
-        event = {
+        init_event = {
             "type": "init",
             "join": join_key,
             "watch": watch_key,
         }
 
-        manager.Manager.game_start(join_key, watch_key, event)
+        join_event = {"type": "join", "character": event["character"]}
+        manager.Manager.game_init(join_key, watch_key, init_event)
+        manager.Manager.save_join(join_key, join_event)
 
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps(init_event))
+        await self.send(text_data=json.dumps(join_event))
         await self.broadcast_positions(join_key)
 
     @require_keys(["join"])
@@ -234,15 +245,19 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         # Send a "position" event to update the UI for connected clients
         await self.broadcast_positions(event["join"])
+        join_event = {"type": "join", "character": event["character"]}
 
+        events = manager.Manager.get_game_events(event["join"])
+        for game_event in events:
+            await self.send(text_data=json.dumps(game_event))
+
+        manager.Manager.save_join(event["join"], join_event)
         # Send a "join" event to log a system event
         await self.channel_layer.group_send(
             event["join"],
             {
                 "type": "game_event",
-                "message": json.dumps(
-                    {"type": "join", "character": event["character"]}
-                ),
+                "message": json.dumps(join_event),
             },
         )
 
@@ -254,6 +269,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
             for character, cards in game.character_cards.items():
                 start_event["cards"][character] = cards
+
+            manager.Manager.save_start(event["join"], start_event)
 
             await self.channel_layer.group_send(
                 event["join"],
@@ -343,6 +360,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event["room"] = clueless.room_positions[
             game.character_positions[event["character"]]
         ]
+
+        manager.Manager.save_suggestion(event["game_id"], event)
+
         await self.channel_layer.group_send(
             event["game_id"], {"type": "game_event", "message": json.dumps(event)}
         )
@@ -369,6 +389,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 event["game_id"], {"type": "game_event", "message": json.dumps(event)}
             )
+            manager.Manager.save_accusation(event["game_id"], event)
 
             # Make the accusation
             game.accuse(
@@ -383,6 +404,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                     "weapon": event["weapon"],
                     "room": event["room"],
                 }
+                manager.Manager.save_win(event["game_id"], win_event)
+                manager.Manager.game_end(event["game_id"])
+
                 await self.channel_layer.group_send(
                     event["game_id"],
                     {"type": "game_event", "message": json.dumps(win_event)},
@@ -398,6 +422,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                 "weapon": event["weapon"],
                 "room": event["room"],
             }
+
+            manager.Manager.save_loss(event["game_id"], lose_event)
+
             await self.channel_layer.group_send(
                 event["game_id"],
                 {"type": "game_event", "message": json.dumps(lose_event)},
@@ -412,6 +439,10 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                     "weapon": game.solution["weapon"],
                     "room": game.solution["room"],
                 }
+
+                manager.Manager.save_total_loss(event["game_id"], end_game_event)
+                manager.Manager.game_end(event["game_id"])
+
                 await self.channel_layer.group_send(
                     event["game_id"],
                     {"type": "game_event", "message": json.dumps(end_game_event)},
@@ -455,6 +486,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "disprover": game.disprover,
             "card": event["card"],
         }
+
+        manager.Manager.save_disprove(event["game_id"], disprove_event)
+
         await self.channel_layer.group_send(
             event["game_id"],
             {"type": "game_event", "message": json.dumps(disprove_event)},
@@ -521,6 +555,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "characters": [] if game.is_full() else game.get_available_characters(),
             "spectator": spectator,
         }
+
+        manager.Manager.save_game_query(event["game_id"], query_game_event)
+
         await self.send(json.dumps(query_game_event))
 
     async def init(self, event: Dict[str, str]) -> None:
@@ -562,6 +599,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         event : Dict[str, Any]
             The message event
         """
+        manager.Manager.save_chat(event["game_id"], event)
         await self.channel_layer.group_send(
             event["game_id"], {"type": "game_event", "message": json.dumps(event)}
         )
