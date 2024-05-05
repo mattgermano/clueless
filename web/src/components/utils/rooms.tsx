@@ -53,16 +53,6 @@ export const Rooms = [
   },
 ];
 
-export function GetRoomById(id: string) {
-  for (const room of Rooms) {
-    if (room.id === id) {
-      return room;
-    }
-  }
-
-  return Rooms[0];
-}
-
 export const RoomSelections = Rooms.map((room) => (
   <MenuItem value={room.id} key={room.id}>
     <Box
