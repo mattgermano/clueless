@@ -9,8 +9,7 @@ from typing import Any, Callable, Dict, List, Union
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 
-from . import clueless
-from . import manager
+from . import clueless, manager
 
 JOIN_GAMES: Dict[str, clueless.Clueless] = {}
 WATCH_GAMES: Dict[str, clueless.Clueless] = {}
@@ -78,7 +77,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
                         del game.character_positions[disconnect_event["character"]]
                         await self.broadcast_positions(game_id)
 
-                    if len(game.characters) < 2 and game.turn_number > 1:
+                    if len(game.characters) < 3 and game.started:
                         end_game_event = {
                             "type": "end_game",
                             "reason": "not_enough_players",
