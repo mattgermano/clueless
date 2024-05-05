@@ -187,17 +187,6 @@ export default function Game() {
       };
 
       sendJsonMessage(event);
-
-      setCounter(counter + 1);
-      setMessages((m) => [
-        ...m,
-        {
-          id: counter,
-          type: "system",
-          event_type: "end_turn",
-          message: `${GetCharacterById(currentTurn)?.name} has ended their turn!`,
-        },
-      ]);
     }
   }
 
@@ -500,6 +489,21 @@ export default function Game() {
                 type: "system",
                 event_type: "move",
                 message: `${GetCharacterById(event.character)?.name} moved to the ${event.room === "Hallway" ? event.room : GetRoomById(event.room)?.name}!`,
+              },
+            ]);
+          }
+          break;
+
+        case "end_turn":
+          if (event.character !== undefined) {
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "end_turn",
+                message: `${GetCharacterById(event.character)?.name} has ended their turn!`,
               },
             ]);
           }

@@ -379,9 +379,9 @@ class Clueless:
             The room being accused
         """
         self.next_turn()
-        position_x, position_y = self.character_positions[self.turn["character"]]
-        if (position_x, position_y) in hallways_positions:
-            self.turn["actions"] = [Action.Move.name, Action.Accuse.name]
+        # position_x, position_y = self.character_positions[self.turn["character"]]
+        # if (position_x, position_y) in hallways_positions:
+        self.turn["actions"] = [Action.Move.name, Action.Accuse.name]
 
         if (
             suspect == self.solution["suspect"]

@@ -508,6 +508,8 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.error("Game with ID {} not found!".format(event["game_id"]))
             return
 
+        current_turn = game.turn["character"]
+
         game.next_turn()
         game.turn["actions"] = [clueless.Action.Move.name]
         position_x, position_y = game.character_positions[game.turn["character"]]
@@ -525,6 +527,14 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         game.turn["actions"].append(clueless.Action.Accuse.name)
 
         await self.broadcast_turn(event["game_id"])
+
+        await self.channel_layer.group_send(
+            event["game_id"],
+            {
+                "type": "game_event",
+                "message": json.dumps({"type": "end_turn", "character": current_turn}),
+            },
+        )
 
     @require_keys(["game_id"])
     async def query_game(self, event: Dict[str, str]) -> None:
