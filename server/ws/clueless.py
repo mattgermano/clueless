@@ -102,6 +102,7 @@ class Clueless:
             "lead_pipe": (-1, -1),
             "wrench": (-1, -1),
         }
+        self.started = False
         self.turn_number = 1
         self.disprover = None
         self.last_suggestion = {}
@@ -163,6 +164,8 @@ class Clueless:
 
                 self.turn["character"] = self.characters[0]
                 self.turn["actions"] = [Action.Move.name]
+
+                self.started = True
         else:
             raise RuntimeError("Game is currently full!")
 

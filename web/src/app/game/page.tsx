@@ -51,6 +51,7 @@ interface EventObject {
   disprover?: string;
   card?: string;
   sender?: string;
+  reason?: string;
   actions?: string[];
 }
 
@@ -488,7 +489,8 @@ export default function Game() {
           if (
             event.suspect !== undefined &&
             event.weapon !== undefined &&
-            event.room !== undefined
+            event.room !== undefined &&
+            event.reason !== undefined
           ) {
             setAccusation({
               character: event.suspect,
@@ -499,11 +501,30 @@ export default function Game() {
             setCurrentTurn(undefined);
             setGameEnded(true);
             setGameStarted(false);
-            setInfo(
-              `All players have made false accusations! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
-            );
+            if (event.reason === "false_accusations") {
+              setInfo(
+                `All players have made false accusations! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+              );
+            } else if (event.reason === "not_enough_players") {
+              setInfo(
+                `Too many players have disconnected! The game has now ended. The solution was ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+              );
+            }
             setBackdropOpen(true);
           }
+          break;
+
+        case "disconnect":
+          setCounter(counter + 1);
+          setMessages((m) => [
+            ...m,
+            {
+              id: counter,
+              type: "system",
+              event_type: "disconnect",
+              message: `${GetCharacterById(event.character)?.name} disconnected from the game!`,
+            },
+          ]);
           break;
 
         case "error":

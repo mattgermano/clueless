@@ -2,6 +2,7 @@
 
 import json
 import secrets
+from collections import defaultdict
 from functools import wraps
 from typing import Any, Callable, Dict, List, Union
 
@@ -12,6 +13,7 @@ from . import clueless
 
 JOIN_GAMES: Dict[str, clueless.Clueless] = {}
 WATCH_GAMES: Dict[str, clueless.Clueless] = {}
+GAME_CHARACTERS = defaultdict(dict)
 
 
 def require_keys(required_keys: List[str]):
@@ -50,6 +52,42 @@ class CluelessConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, code) -> None:
         """Disconnects clients from the channel"""
         for game_id in JOIN_GAMES.keys():
+            if self.channel_name in GAME_CHARACTERS[game_id]:
+                disconnect_event = {
+                    "type": "disconnect",
+                    "character": GAME_CHARACTERS[game_id][self.channel_name],
+                }
+
+                await self.channel_layer.group_send(
+                    game_id,
+                    {"type": "game_event", "message": json.dumps(disconnect_event)},
+                )
+
+                game = JOIN_GAMES[game_id]
+                if game.turn["character"] == disconnect_event["character"]:
+                    game.next_turn()
+                    game.turn_number -= 1
+                    await self.broadcast_turn(game_id)
+
+                game.characters.remove(disconnect_event["character"])
+                if not game.started:
+                    del game.character_positions[disconnect_event["character"]]
+                    await self.broadcast_positions(game_id)
+
+                if len(game.characters) < 2 and game.turn_number > 1:
+                    end_game_event = {
+                        "type": "end_game",
+                        "reason": "not_enough_players",
+                        "suspect": game.solution["suspect"],
+                        "weapon": game.solution["weapon"],
+                        "room": game.solution["room"],
+                    }
+
+                    await self.channel_layer.group_send(
+                        game_id,
+                        {"type": "game_event", "message": json.dumps(end_game_event)},
+                    )
+
             await self.channel_layer.group_discard(game_id, self.channel_name)
 
     async def error(self, error: str) -> None:
@@ -149,6 +187,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Add the player to a new channel group
         await self.channel_layer.group_add(join_key, self.channel_name)
 
+        # Store the channel name associated with the character
+        GAME_CHARACTERS[join_key][self.channel_name] = event["character"]
+
         # Send the access token to the browser of the first player
         event = {
             "type": "init",
@@ -179,6 +220,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
 
         # Add the player to the channel group
         await self.channel_layer.group_add(event["join"], self.channel_name)
+
+        # Store the channel name associated with the character
+        GAME_CHARACTERS[event["join"]][self.channel_name] = event["character"]
 
         # Send a "position" event to update the UI for connected clients
         await self.broadcast_positions(event["join"])
@@ -333,6 +377,7 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             if len(game.losers) == game.player_count:
                 end_game_event = {
                     "type": "end_game",
+                    "reason": "false_accusations",
                     "suspect": game.solution["suspect"],
                     "weapon": game.solution["weapon"],
                     "room": game.solution["room"],
