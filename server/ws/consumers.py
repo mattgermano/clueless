@@ -9,6 +9,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 
 from . import clueless
+from . import manager
 
 JOIN_GAMES: Dict[str, clueless.Clueless] = {}
 WATCH_GAMES: Dict[str, clueless.Clueless] = {}
@@ -155,6 +156,9 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             "join": join_key,
             "watch": watch_key,
         }
+
+        manager.Manager.game_start(join_key, watch_key, event)
+
         await self.send(text_data=json.dumps(event))
         await self.broadcast_positions(join_key)
 
