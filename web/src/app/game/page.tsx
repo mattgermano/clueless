@@ -299,6 +299,21 @@ export default function Game() {
           }
           break;
 
+        case "join":
+          if (event.character !== undefined) {
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "join",
+                message: `${GetCharacterById(event.character)?.name} joined the game!`,
+              },
+            ]);
+          }
+          break;
+
         case "start":
           setGameStarted(true);
           if (event.cards !== undefined) setCharacterCards(event.cards);

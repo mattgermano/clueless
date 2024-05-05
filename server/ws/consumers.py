@@ -231,6 +231,17 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Send a "position" event to update the UI for connected clients
         await self.broadcast_positions(event["join"])
 
+        # Send a "join" event to log a system event
+        await self.channel_layer.group_send(
+            event["join"],
+            {
+                "type": "game_event",
+                "message": json.dumps(
+                    {"type": "join", "character": event["character"]}
+                ),
+            },
+        )
+
         if game.is_full():
             start_event = {
                 "type": "start",
