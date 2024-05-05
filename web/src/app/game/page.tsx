@@ -3,19 +3,25 @@
 import AccusationButton from "@/components/AccusationButton";
 import Board from "@/components/Board";
 import ClueSheet from "@/components/ClueSheet";
+import ImagePortrait from "@/components/ImagePortrait";
 import Particles from "@/components/Particles";
 import SuggestionButton from "@/components/SuggestionButton";
 import TextWithCopyButton from "@/components/TextWithCopyButton";
 import { GetCardInfo } from "@/components/utils/cards";
 import {
-  CharacterPositions,
   CharacterCards,
+  CharacterPositions,
   GetCardsByCharacter,
+  GetCharacterById,
 } from "@/components/utils/characters";
-import { WeaponPositions } from "@/components/utils/weapons";
+import { GetRoomById } from "@/components/utils/rooms";
+import { GetWeaponById, WeaponPositions } from "@/components/utils/weapons";
+import { SkipNext } from "@mui/icons-material";
 import {
   Alert,
+  Backdrop,
   Box,
+  Button,
   Card,
   CardContent,
   CardMedia,
@@ -34,9 +40,17 @@ interface EventObject {
   cards?: CharacterCards;
   player?: string;
   message?: string;
+  character?: string;
+  suspect?: string;
+  weapon?: string;
+  room?: string;
+  disprover?: string;
+  card?: string;
+  actions?: string[];
 }
 
 export default function Game() {
+  const [info, setInfo] = useState("");
   const [error, setError] = useState("");
   const [winner, setWinner] = useState("");
   const [joinId, setJoinId] = useState<string | null>("");
@@ -45,8 +59,23 @@ export default function Game() {
   const [character, setCharacter] = useState<string | null | undefined>(
     undefined,
   );
+  const [suggestion, setSuggestion] = useState({
+    character: "",
+    suspect: "",
+    weapon: "",
+    room: "",
+  });
+  const [accusation, setAccusation] = useState({
+    character: "",
+    suspect: "",
+    weapon: "",
+    room: "",
+  });
+  const [currentTurn, setCurrentTurn] = useState<string | undefined>();
+  const [currentActions, setCurrentActions] = useState<string[]>([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
+  const [backdropOpen, setBackdropOpen] = useState(false);
   const [characterPositions, setCharacterPositions] = useState<
     CharacterPositions | undefined
   >();
@@ -67,7 +96,6 @@ export default function Game() {
   );
 
   function handleRoomClick(x: Number, y: Number) {
-    console.log(`Clicked: (${x}, ${y})`);
     if (joinId) {
       const event = {
         type: "move",
@@ -114,6 +142,39 @@ export default function Game() {
     }
   }
 
+  function handleCardClick(card: string) {
+    if (joinId) {
+      const event = {
+        type: "disprove",
+        card: card,
+        game_id: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function handleEndTurnClick() {
+    if (joinId) {
+      const event = {
+        type: "end_turn",
+        game_id: joinId,
+      };
+
+      sendJsonMessage(event);
+    }
+  }
+
+  function closeBackdrop() {
+    setAccusation({
+      character: "",
+      suspect: "",
+      weapon: "",
+      room: "",
+    });
+    setBackdropOpen(false);
+  }
+
   useEffect(() => {
     let event = {};
 
@@ -148,7 +209,7 @@ export default function Game() {
         event = {
           type: "init",
           character: player,
-          player_count: playerCount,
+          player_count: playerCount ? parseInt(playerCount) : 0,
         };
       }
       console.log(
@@ -177,6 +238,11 @@ export default function Game() {
           if (event.watch !== undefined) setWatchId(event.watch);
           break;
 
+        case "turn":
+          if (event.character !== undefined) setCurrentTurn(event.character);
+          if (event.actions !== undefined) setCurrentActions(event.actions);
+          break;
+
         case "position":
           if (event.character_positions !== undefined) {
             setCharacterPositions(event.character_positions);
@@ -191,8 +257,80 @@ export default function Game() {
           if (event.cards !== undefined) setCharacterCards(event.cards);
           break;
 
+        case "suggestion":
+          if (
+            event.character !== undefined &&
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setSuggestion({
+              character: event.character,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+          }
+          break;
+
+        case "disprove":
+          if (
+            event.character !== undefined &&
+            event.disprover !== undefined &&
+            event.card !== undefined
+          ) {
+            if (character === event.character) {
+              if (event.card.length === 0) {
+                setInfo(
+                  `${GetCharacterById(event.disprover)?.name} could not disprove your suggestion!`,
+                );
+              } else {
+                setInfo(
+                  `Your suggestion was disproven by ${GetCharacterById(event.disprover)?.name} with the ${GetCardInfo(event.card)?.name} card.`,
+                );
+              }
+              setBackdropOpen(true);
+            }
+          }
+          break;
+
+        case "accusation":
+          if (
+            event.character !== undefined &&
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setAccusation({
+              character: event.character,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+
+            setInfo(
+              `${GetCharacterById(event.character)?.name} has made a false accusation! They accused ${GetCharacterById(event.suspect)?.name} with the ${GetWeaponById(event.weapon)?.name} in the ${GetRoomById(event.room)?.name}.`,
+            );
+            setBackdropOpen(true);
+          }
+          break;
+
         case "win":
-          if (event.player !== undefined) setWinner(event.player);
+          if (
+            event.character !== undefined &&
+            event.suspect !== undefined &&
+            event.weapon !== undefined &&
+            event.room !== undefined
+          ) {
+            setAccusation({
+              character: event.character,
+              suspect: event.suspect,
+              weapon: event.weapon,
+              room: event.room,
+            });
+            setWinner(event.character);
+            setGameStarted(false);
+          }
           break;
 
         case "error":
@@ -204,7 +342,7 @@ export default function Game() {
           throw new Error(`Unsupported event type: ${event.type}.`);
       }
     }
-  }, [lastJsonMessage]);
+  }, [lastJsonMessage, character]);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",
@@ -239,22 +377,9 @@ export default function Game() {
             className="absolute inset-0 pointer-events-none"
             quantity={50}
           />
-          <Alert className="mb-2 justify-center" severity="info">
-            <span>The WebSocket is currently {connectionStatus}</span>
-          </Alert>
-          <Alert className="mb-2 justify-center" severity="info">
-            {lastJsonMessage ? (
-              <span>
-                Last message from server:{" "}
-                {JSON.stringify(lastJsonMessage, null, 2)}
-              </span>
-            ) : null}
-          </Alert>
-          {!gameStarted && (
-            <Alert className="mb-2 justify-center" severity="info">
-              Waiting for additional players before starting game!
-            </Alert>
-          )}
+          <h1 className="inline-flex font-extrabold text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
+            Clue-Less
+          </h1>
           <Box
             sx={{
               display: "flex",
@@ -263,14 +388,14 @@ export default function Game() {
               gap: 2,
             }}
           >
-            {joinId && (
+            {joinId && !gameStarted && !winner && (
               <TextWithCopyButton
                 title="Join Game ID:"
                 text={joinId}
                 handleCopy={handleCopy}
               />
             )}
-            {watchId && (
+            {watchId && !gameStarted && !winner && (
               <TextWithCopyButton
                 title="Watch Game ID:"
                 text={watchId}
@@ -280,51 +405,259 @@ export default function Game() {
           </Box>
           <div className="mb-2 mt-2">
             {winner && (
-              <Alert className="justify-center" severity="success">
-                {winner} has won the game!
-              </Alert>
+              <Card className="flex flex-col" variant="outlined">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {GetCharacterById(winner)?.name} has won the game!
+                </Typography>
+                <Typography variant="h6" component="div" className="block mb-5">
+                  The solution was {GetCharacterById(accusation.suspect)?.name}{" "}
+                  with the {GetWeaponById(accusation.weapon)?.name} in the{" "}
+                  {GetRoomById(accusation.room)?.name}.
+                </Typography>
+                <div className="flex justify-center space-x-4 m-4">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </Card>
             )}
           </div>
-          <Board
-            handleRoomClick={handleRoomClick}
-            characterPositions={characterPositions}
-            weaponPositions={weaponPositions}
-            gameStarted={gameStarted}
-          />
+          <Backdrop
+            sx={{
+              color: "#fff",
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              backgroundColor: "rgba(0, 0, 0, 0.9)",
+            }}
+            open={backdropOpen}
+            onClick={closeBackdrop}
+          >
+            {accusation.character.length > 0 ? (
+              <main className="flex flex-col">
+                <Typography variant="h6" component="div" className="block mb-5">
+                  {info}
+                </Typography>
+                <div className="flex justify-center space-x-4 m-10">
+                  <ImagePortrait
+                    title={GetCharacterById(accusation.suspect)?.name}
+                    image={GetCharacterById(accusation.suspect)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetWeaponById(accusation.weapon)?.name}
+                    image={GetWeaponById(accusation.weapon)?.image}
+                    width={125}
+                    height={125}
+                  />
+                  <ImagePortrait
+                    title={GetRoomById(accusation.room)?.name}
+                    image={GetRoomById(accusation.room)?.image}
+                    width={125}
+                    height={125}
+                  />
+                </div>
+              </main>
+            ) : (
+              <Typography variant="h6" component="div" className="block mb-5">
+                {info}
+              </Typography>
+            )}
+          </Backdrop>
+          <div className="relative flex">
+            {!winner && (
+              <Card
+                className="justify-center absolute -left-40 top-72"
+                sx={{ maxWidth: 200 }}
+                variant="outlined"
+              >
+                <Typography gutterBottom variant="h5" component="div">
+                  Current Turn
+                </Typography>
+                <CardMedia
+                  component="img"
+                  height={10}
+                  image={
+                    currentTurn
+                      ? GetCharacterById(currentTurn)?.image
+                      : "/characters/generic.webp"
+                  }
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h6" component="div">
+                    {!gameStarted ? (
+                      <b>Waiting for additional players!</b>
+                    ) : (
+                      <>
+                        <b>Available Actions</b>
+                        {currentActions.map((action) => (
+                          <ol key={action}>
+                            <li>{action}</li>
+                          </ol>
+                        ))}
+
+                        {currentActions.includes("Disprove") && (
+                          <>
+                            <Typography
+                              gutterBottom
+                              variant="subtitle1"
+                              component="div"
+                            >
+                              <br />
+                              <b>
+                                {GetCharacterById(suggestion.character)?.name}
+                                &apos;s Suggestion
+                              </b>
+                            </Typography>
+                            <div className="flex justify-center space-x-2">
+                              <ImagePortrait
+                                title={
+                                  GetCharacterById(suggestion.suspect)?.name
+                                }
+                                image={
+                                  GetCharacterById(suggestion.suspect)?.image
+                                }
+                                width={40}
+                                height={40}
+                              />
+                              <ImagePortrait
+                                title={GetWeaponById(suggestion.weapon)?.name}
+                                image={GetWeaponById(suggestion.weapon)?.image}
+                                width={40}
+                                height={40}
+                              />
+                              <ImagePortrait
+                                title={GetRoomById(suggestion.room)?.name}
+                                image={GetRoomById(suggestion.room)?.image}
+                                width={40}
+                                height={40}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+            <Board
+              handleRoomClick={handleRoomClick}
+              characterPositions={characterPositions}
+              weaponPositions={weaponPositions}
+              gameStarted={
+                gameStarted &&
+                currentTurn === character &&
+                currentActions.includes("Move")
+              }
+            />
+          </div>
           <div className="inline-flex mt-2 justify-center space-x-4">
             <SuggestionButton
               handleSuggestionClick={handleSuggestionClick}
-              gameStarted={gameStarted}
+              gameStarted={
+                gameStarted &&
+                currentTurn === character &&
+                currentActions.includes("Suggest")
+              }
             />
             <AccusationButton
               handleAccusationClick={handleAccusationClick}
-              gameStarted={gameStarted}
+              gameStarted={
+                gameStarted &&
+                currentTurn === character &&
+                currentActions.includes("Accuse")
+              }
             />
-            <ClueSheet />
+            {gameStarted &&
+              currentTurn === character &&
+              currentActions.includes("End") && (
+                <Button variant="outlined" onClick={handleEndTurnClick}>
+                  <span className="pr-2">End Turn</span>{" "}
+                  <SkipNext fontSize="small" />
+                </Button>
+              )}
+            <ClueSheet character={character} characterCards={characterCards} />
           </div>
           <div className="flex flex-row justify-center space-x-4 mt-4">
             {characterCards &&
               character &&
-              GetCardsByCharacter(character, characterCards).map((card) => (
-                <Card
-                  variant="outlined"
-                  key={card}
-                  className="ring-4"
-                  sx={{ maxWidth: 300 }}
-                >
-                  <CardMedia
-                    component="img"
-                    height={10}
-                    image={GetCardInfo(card)?.image}
-                  />
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="div">
-                      {GetCardInfo(card)?.name}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
+              GetCardsByCharacter(character, characterCards).map((card) => {
+                let classes = "";
+                if (
+                  currentTurn === character &&
+                  currentActions.includes("Disprove")
+                ) {
+                  classes = "ring-4 ring-red-500";
+                  if (Object.values(suggestion).includes(card)) {
+                    classes = "ring-4 ring-green-500";
+                  }
+                }
+
+                return (
+                  <Button
+                    key={card}
+                    onClick={() => {
+                      handleCardClick(card);
+                    }}
+                    disabled={
+                      currentTurn !== character ||
+                      !currentActions.includes("Disprove") ||
+                      !Object.values(suggestion).includes(card)
+                    }
+                  >
+                    <Card
+                      variant="outlined"
+                      className={`${classes}`}
+                      sx={{ maxWidth: 300 }}
+                    >
+                      <CardMedia
+                        component="img"
+                        height={10}
+                        image={GetCardInfo(card)?.image}
+                      />
+                      <CardContent>
+                        <Typography
+                          gutterBottom
+                          variant="caption"
+                          component="div"
+                        >
+                          {GetCardInfo(card)?.name}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Button>
+                );
+              })}
           </div>
+          {character &&
+            characterCards &&
+            currentTurn === character &&
+            currentActions.includes("Disprove") &&
+            !GetCardsByCharacter(character, characterCards).some((card) =>
+              Object.values(suggestion).includes(card),
+            ) && (
+              <div className="mt-2">
+                <Button variant="outlined" onClick={() => handleCardClick("")}>
+                  <span className="pr-2">Pass Turn</span>{" "}
+                  <SkipNext fontSize="small" />
+                </Button>
+              </div>
+            )}
 
           <Snackbar
             open={openErrorSnackbar}

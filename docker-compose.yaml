@@ -53,6 +53,7 @@ services:
       - ./nginx:/etc/nginx/conf.d
     ports:
       - 80:80
+      - 443:443
 
 networks:
   webnet:

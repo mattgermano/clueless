@@ -2,13 +2,13 @@
 
 import Square from "@/components/Square";
 import Grid from "@mui/material/Unstable_Grid2";
+import { useEffect, useState } from "react";
 import {
-  Position,
+  CharacterPositions,
   GetCharactersByPosition,
-  CharacterPositions as CharacterPositions,
+  Position,
 } from "./utils/characters";
 import { GetWeaponByPosition, WeaponPositions } from "./utils/weapons";
-import { useEffect, useState } from "react";
 
 interface BoardProps {
   characterPositions?: CharacterPositions;
@@ -114,7 +114,7 @@ export default function Board({
   handleRoomClick,
 }: BoardProps) {
   const [firstTurnComplete, setFirstTurnComplete] = useState(false);
-  const displayedRooms = firstTurnComplete ? rooms : startingRooms;
+  const displayedRooms = firstTurnComplete ? startingRooms : startingRooms;
 
   useEffect(() => {
     let foundCharacterInStartingSquare = false;
@@ -138,7 +138,7 @@ export default function Board({
   }, [characterPositions]);
 
   return (
-    <Grid container spacing={1} columns={firstTurnComplete ? 50 : 70}>
+    <Grid container spacing={1} columns={firstTurnComplete ? 70 : 70}>
       {displayedRooms.map((room) => (
         <Grid key={`${room.title}-${room.x}-${room.y}`} xs={10}>
           <Square
@@ -152,7 +152,7 @@ export default function Board({
               room.y,
               characterPositions,
             )}
-            weapon={GetWeaponByPosition(room.x, room.y, weaponPositions)}
+            weapons={GetWeaponByPosition(room.x, room.y, weaponPositions)}
             gameStarted={gameStarted}
           />
         </Grid>

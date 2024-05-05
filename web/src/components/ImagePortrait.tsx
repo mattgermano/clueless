@@ -1,8 +1,8 @@
 import { Avatar, Box, Tooltip } from "@mui/material";
 
 interface ImagePortraitProps {
-  title: string;
-  image: string;
+  title?: string;
+  image?: string;
   width?: number;
   height?: number;
 }
