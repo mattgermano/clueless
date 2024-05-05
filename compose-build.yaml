@@ -1,0 +1,12 @@
+services:
+  clueless-frontend:
+    build:
+      context: "web"
+      network: host
+    image: "${CLUELESS_REGISTRY}/${CLUELESS_NAMESPACE}/clueless-frontend:${CLUELESS_TAG}"
+
+  clueless-backend:
+    build:
+      context: "server"
+      network: host
+    image: "${CLUELESS_REGISTRY}/${CLUELESS_NAMESPACE}/clueless-backend:${CLUELESS_TAG}"

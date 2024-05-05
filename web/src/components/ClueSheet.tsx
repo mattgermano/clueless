@@ -1,30 +1,23 @@
+import { Theme } from "@/app/game/page";
+import { ArticleOutlined } from "@mui/icons-material";
 import {
-  ArticleOutlined,
-  Build,
-  MeetingRoom,
-  Person,
-} from "@mui/icons-material";
-import {
-  Box,
   Button,
   Card,
   Checkbox,
   Drawer,
   Paper,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
-  Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { Characters } from "./utils/characters";
-import { Weapons } from "./utils/weapons";
+import ImagePortrait from "./ImagePortrait";
+import { CharacterCards, Characters } from "./utils/characters";
 import { Rooms } from "./utils/rooms";
+import { Weapons } from "./utils/weapons";
 
 interface SuspectCheckboxStates {
   miss_scarlett: boolean[];
@@ -113,42 +106,18 @@ const initialRoomCheckboxStates: RoomCheckboxStates = {
   study: Array(7).fill(false),
 };
 
-function a11yProps(index: number) {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
+interface ClueCardProps {
+  character?: string | null;
+  characterCards?: CharacterCards;
+  theme: Theme;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-export default function ClueCard() {
+export default function ClueCard({
+  character,
+  characterCards,
+  theme,
+}: ClueCardProps) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(0);
   const [suspectCheckboxStates, setSuspectCheckboxStates] = useState(
     initialSuspectCheckboxStates,
   );
@@ -161,10 +130,6 @@ export default function ClueCard() {
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
-  };
-
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
   };
 
   const handleSuspectCheckboxChange = (id: Suspect, column: Number) => {
@@ -209,149 +174,153 @@ export default function ClueCard() {
         <span className="pr-2">Clue Sheet</span>{" "}
         <ArticleOutlined fontSize="small" />
       </Button>
-      <Drawer open={open} onClose={toggleDrawer(false)} anchor="bottom">
-        <Tabs onChange={handleChange}>
-          <Tab icon={<Person />} label="Suspects" {...a11yProps(0)} />
-          <Tab icon={<Build />} label="Weapons" {...a11yProps(1)} />
-          <Tab icon={<MeetingRoom />} label="Rooms" {...a11yProps(2)} />
-        </Tabs>
-        <CustomTabPanel value={value} index={0}>
-          <Card variant="outlined">
-            <TableContainer style={{ maxHeight: 400 }} component={Paper}>
-              <Table sx={{ minWidth: 650 }} size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    {Characters.map((character) => (
-                      <TableCell key={character.id} align="right">
-                        {character.name}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+      <Drawer open={open} onClose={toggleDrawer(false)} anchor="right">
+        <Card variant="outlined">
+          <TableContainer style={{ maxHeight: 550 }} component={Paper}>
+            <Table sx={{ minWidth: 650 }} size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
                   {Characters.map((character) => (
-                    <TableRow
-                      key={character.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {character.name}
-                      </TableCell>
-                      {[...Array(7)].map((_, index) => (
-                        <TableCell key={index} align="right">
-                          <Checkbox
-                            checked={
-                              suspectCheckboxStates[character.id as Suspect][
-                                index
-                              ]
-                            }
-                            onChange={() =>
-                              handleSuspectCheckboxChange(
-                                character.id as Suspect,
-                                index,
-                              )
-                            }
-                          />
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                    <TableCell key={character.id} align="right">
+                      {character.name}
+                    </TableCell>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
-        </CustomTabPanel>
-
-        <CustomTabPanel value={value} index={1}>
-          <Card variant="outlined">
-            <TableContainer style={{ maxHeight: 400 }} component={Paper}>
-              <Table sx={{ minWidth: 650 }} size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    {Characters.map((character) => (
-                      <TableCell key={character.id} align="right">
-                        {character.name}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Characters.map((character) => (
+                  <TableRow
+                    key={character.name}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      <ImagePortrait
+                        title={character.name}
+                        image={character.image[theme]}
+                        width={40}
+                        height={40}
+                      />
+                    </TableCell>
+                    {[...Array(7)].map((_, index) => (
+                      <TableCell key={index} align="right">
+                        <Checkbox
+                          checked={
+                            suspectCheckboxStates[character.id as Suspect][
+                              index
+                            ]
+                          }
+                          onChange={() =>
+                            handleSuspectCheckboxChange(
+                              character.id as Suspect,
+                              index,
+                            )
+                          }
+                        />
                       </TableCell>
                     ))}
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Weapons.map((weapon) => (
-                    <TableRow
-                      key={weapon.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {weapon.name}
-                      </TableCell>
-                      {[...Array(7)].map((_, index) => (
-                        <TableCell key={index} align="right">
-                          <Checkbox
-                            checked={
-                              weaponCheckboxStates[weapon.id as Weapon][index]
-                            }
-                            onChange={() =>
-                              handleWeaponCheckboxChange(
-                                weapon.id as Weapon,
-                                index,
-                              )
-                            }
-                          />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
-        </CustomTabPanel>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
 
-        <CustomTabPanel value={value} index={2}>
-          <Card variant="outlined">
-            <TableContainer style={{ maxHeight: 400 }} component={Paper}>
-              <Table sx={{ minWidth: 650 }} size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    {Characters.map((character) => (
-                      <TableCell key={character.id} align="right">
-                        {character.name}
+        <Card variant="outlined">
+          <TableContainer style={{ maxHeight: 550 }} component={Paper}>
+            <Table sx={{ minWidth: 650 }} size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  {Characters.map((character) => (
+                    <TableCell key={character.id} align="right">
+                      {character.name}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Weapons.map((weapon) => (
+                  <TableRow
+                    key={weapon.name}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      <ImagePortrait
+                        title={weapon.name}
+                        image={weapon.image[theme]}
+                        width={40}
+                        height={40}
+                      />
+                    </TableCell>
+                    {[...Array(7)].map((_, index) => (
+                      <TableCell key={index} align="right">
+                        <Checkbox
+                          checked={
+                            weaponCheckboxStates[weapon.id as Weapon][index]
+                          }
+                          onChange={() =>
+                            handleWeaponCheckboxChange(
+                              weapon.id as Weapon,
+                              index,
+                            )
+                          }
+                        />
                       </TableCell>
                     ))}
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Rooms.map((room) => (
-                    <TableRow
-                      key={room.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {room.name}
-                      </TableCell>
-                      {[...Array(7)].map((_, index) => (
-                        <TableCell key={index} align="right">
-                          <Checkbox
-                            checked={roomCheckboxStates[room.id as Room][index]}
-                            onChange={() =>
-                              handleRoomCheckboxChange(room.id as Room, index)
-                            }
-                          />
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+
+        <Card variant="outlined">
+          <TableContainer style={{ maxHeight: 550 }} component={Paper}>
+            <Table sx={{ minWidth: 650 }} size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  {Characters.map((character) => (
+                    <TableCell key={character.id} align="right">
+                      {character.name}
+                    </TableCell>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
-        </CustomTabPanel>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Rooms.map((room) => (
+                  <TableRow
+                    key={room.name}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      <ImagePortrait
+                        title={room.name}
+                        image={room.image[theme]}
+                        width={40}
+                        height={40}
+                      />
+                    </TableCell>
+                    {[...Array(7)].map((_, index) => (
+                      <TableCell key={index} align="right">
+                        <Checkbox
+                          checked={roomCheckboxStates[room.id as Room][index]}
+                          onChange={() =>
+                            handleRoomCheckboxChange(room.id as Room, index)
+                          }
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
 
         <Button variant="contained" onClick={resetCheckboxStates}>
           Clear Selections
