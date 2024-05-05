@@ -1,7 +1,7 @@
 import { Button, Tooltip } from "@mui/material";
 import Image from "next/image";
-import ImagePortrait from "./ImagePortrait";
 import { Character } from "./utils/characters";
+import ImagePortrait from "./ImagePortrait";
 import { Weapon } from "./utils/weapons";
 
 interface SquareProps {
@@ -11,7 +11,7 @@ interface SquareProps {
   y: Number;
   handleClick(x: Number, y: Number): void;
   characters?: Character[];
-  weapons?: Weapon[];
+  weapon?: Weapon;
   gameStarted: Boolean;
   width?: number;
   height?: number;
@@ -23,7 +23,7 @@ export default function Square({
   x,
   y,
   characters,
-  weapons,
+  weapon,
   handleClick,
   gameStarted,
   width = 500,
@@ -54,8 +54,8 @@ export default function Square({
                   <ImagePortrait
                     title={character.name}
                     image={character.image}
-                    width={50}
-                    height={50}
+                    width={70}
+                    height={70}
                   />
                 </div>
               );
@@ -79,7 +79,6 @@ export default function Square({
               />
 
               {characters &&
-                characters.length <= 3 &&
                 characters.map((character, index) => {
                   let position = "";
                   if (index === 0) {
@@ -95,47 +94,23 @@ export default function Square({
                       <ImagePortrait
                         title={character.name}
                         image={character.image}
-                        width={50}
-                        height={50}
+                        width={70}
+                        height={70}
                       />
                     </div>
                   );
                 })}
 
-              {characters && characters.length > 3 && (
-                <div className="absolute left-0 top-0">
+              {weapon && (
+                <div className="absolute bottom-0 right-0">
                   <ImagePortrait
-                    title={characters
-                      .map((character) => character.name)
-                      .join(", ")}
-                    image="/characters/generic.webp"
-                    width={50}
-                    height={50}
+                    title={weapon.name}
+                    image={weapon.image}
+                    width={70}
+                    height={70}
                   />
                 </div>
               )}
-
-              {weapons &&
-                weapons.length <= 2 &&
-                weapons.map((weapon, index) => {
-                  let position = "";
-                  if (index === 0) {
-                    position = "bottom-0 right-0";
-                  } else if (index === 1) {
-                    position = "bottom-0 right-5";
-                  }
-
-                  return (
-                    <div key={weapon.id} className={`absolute ${position}`}>
-                      <ImagePortrait
-                        title={weapon.name}
-                        image={weapon.image}
-                        width={40}
-                        height={40}
-                      />
-                    </div>
-                  );
-                })}
             </div>
           </Tooltip>
         </Button>
