@@ -19,15 +19,13 @@ export interface SystemMessageProps {
 
 export type Message = PlayerMessageProps | SystemMessageProps;
 
-const messageStyle = { mb: 1, maxWidth: 400, minWidth: 400 };
-
 export const PlayerMessage = (props: PlayerMessageProps) => {
   let sender = GetCharacterById(props.sender)?.name;
   if (props.isUser && sender !== null) {
     sender += " (You)";
   }
   return (
-    <Paper sx={messageStyle}>
+    <Paper>
       <Typography paragraph>
         {sender}: {props.message}
       </Typography>
@@ -37,7 +35,7 @@ export const PlayerMessage = (props: PlayerMessageProps) => {
 
 export const SystemMessage = (props: SystemMessageProps) => {
   return (
-    <Paper sx={messageStyle}>
+    <Paper>
       <Typography paragraph>{props.message}</Typography>
     </Paper>
   );

@@ -187,6 +187,17 @@ export default function Game() {
       };
 
       sendJsonMessage(event);
+
+      setCounter(counter + 1);
+      setMessages((m) => [
+        ...m,
+        {
+          id: counter,
+          type: "system",
+          event_type: "end_turn",
+          message: `${GetCharacterById(currentTurn)?.name} has ended their turn!`,
+        },
+      ]);
     }
   }
 
