@@ -2,7 +2,7 @@ import { Characters } from "./characters";
 import { Rooms } from "./rooms";
 import { Weapons } from "./weapons";
 
-export function GetCardInfo(card: string) {
+export function GetCardInfo(card: string | undefined) {
   for (const character of Characters) {
     if (card === character.id) {
       return character;

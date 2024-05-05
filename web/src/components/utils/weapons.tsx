@@ -3,7 +3,9 @@ import { Avatar, Box, ListItemText, MenuItem } from "@mui/material";
 export interface Weapon {
   id: string;
   name: string;
-  image: string;
+  image: {
+    [theme: string]: string;
+  };
 }
 
 export interface WeaponPositions {
@@ -22,32 +24,56 @@ export const Weapons = [
   {
     id: "knife",
     name: "Knife",
-    image: "/weapons/knife.webp",
+    image: {
+      Classic: "/weapons/knife.webp",
+      "8-Bit": "/weapons/knife.webp",
+      Medieval: "/weapons/knife.webp",
+    },
   },
   {
     id: "candle_stick",
     name: "Candle Stick",
-    image: "/weapons/candle_stick.webp",
+    image: {
+      Classic: "/weapons/candle_stick.webp",
+      "8-Bit": "/weapons/candle_stick.webp",
+      Medieval: "/weapons/candle_stick.webp",
+    },
   },
   {
     id: "revolver",
     name: "Revolver",
-    image: "/weapons/revolver.webp",
+    image: {
+      Classic: "/weapons/revolver.webp",
+      "8-Bit": "/weapons/revolver.webp",
+      Medieval: "/weapons/revolver.webp",
+    },
   },
   {
     id: "rope",
     name: "Rope",
-    image: "/weapons/rope.webp",
+    image: {
+      Classic: "/weapons/rope.webp",
+      "8-Bit": "/weapons/rope.webp",
+      Medieval: "/weapons/rope.webp",
+    },
   },
   {
     id: "lead_pipe",
     name: "Lead Pipe",
-    image: "/weapons/lead_pipe.webp",
+    image: {
+      Classic: "/weapons/lead_pipe.webp",
+      "8-Bit": "/weapons/lead_pipe.webp",
+      Medieval: "/weapons/lead_pipe.webp",
+    },
   },
   {
     id: "wrench",
     name: "Wrench",
-    image: "/weapons/wrench.webp",
+    image: {
+      Classic: "/weapons/wrench.webp",
+      "8-Bit": "/weapons/wrench.webp",
+      Medieval: "/weapons/wrench.webp",
+    },
   },
 ];
 
@@ -63,7 +89,7 @@ export const WeaponSelections = Weapons.map((weapon) => (
     >
       <ListItemText primary={weapon.name} />
       <Avatar
-        src={weapon.image}
+        src={weapon.image["Classic"]}
         alt={weapon.name}
         sx={{ width: 50, height: 50 }}
       />
@@ -71,7 +97,7 @@ export const WeaponSelections = Weapons.map((weapon) => (
   </MenuItem>
 ));
 
-export function GetWeaponById(id: string) {
+export function GetWeaponById(id: string | undefined) {
   for (const weapon of Weapons) {
     if (weapon.id === id) {
       return weapon;

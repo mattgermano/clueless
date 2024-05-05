@@ -3,7 +3,9 @@ import ImagePortrait from "../ImagePortrait";
 export interface Character {
   id: string;
   name: string;
-  image: string;
+  image: {
+    [theme: string]: string;
+  };
 }
 
 export interface CharacterPositions {
@@ -26,32 +28,56 @@ export const Characters = [
   {
     id: "miss_scarlett",
     name: "Miss Scarlett",
-    image: "/characters/miss_scarlett.webp",
+    image: {
+      Classic: "/characters/miss_scarlett.webp",
+      "8-Bit": "/characters/miss_scarlett.webp",
+      Medieval: "/characters/miss_scarlett.webp",
+    },
   },
   {
     id: "colonel_mustard",
     name: "Colonel Mustard",
-    image: "/characters/colonel_mustard.webp",
+    image: {
+      Classic: "/characters/colonel_mustard.webp",
+      "8-Bit": "/characters/colonel_mustard.webp",
+      Medieval: "/characters/colonel_mustard.webp",
+    },
   },
   {
     id: "mrs_white",
     name: "Mrs. White",
-    image: "/characters/mrs_white.webp",
+    image: {
+      Classic: "/characters/mrs_white.webp",
+      "8-Bit": "/characters/mrs_white.webp",
+      Medieval: "/characters/mrs_white.webp",
+    },
   },
   {
     id: "mr_green",
     name: "Mr. Green",
-    image: "/characters/mr_green.webp",
+    image: {
+      Classic: "/characters/mr_green.webp",
+      "8-Bit": "/characters/mr_green.webp",
+      Medieval: "/characters/mr_green.webp",
+    },
   },
   {
     id: "mrs_peacock",
     name: "Mrs. Peacock",
-    image: "/characters/mrs_peacock.webp",
+    image: {
+      Classic: "/characters/mrs_peacock.webp",
+      "8-Bit": "/characters/mrs_peacock.webp",
+      Medieval: "/characters/mrs_peacock.webp",
+    },
   },
   {
     id: "professor_plum",
     name: "Professor Plum",
-    image: "/characters/professor_plum.webp",
+    image: {
+      Classic: "/characters/professor_plum.webp",
+      "8-Bit": "/characters/professor_plum.webp",
+      Medieval: "/characters/professor_plum.webp",
+    },
   },
 ];
 
@@ -67,7 +93,7 @@ export const CharacterSelections = Characters.map((character) => (
     >
       <ListItemText primary={character.name} />
       <ImagePortrait
-        image={character.image}
+        image={character.image["Classic"]}
         title={character.name}
         width={50}
         height={50}
@@ -95,7 +121,7 @@ export const AvailableCharacterSelections = ({
           >
             <ListItemText primary={character.name} />
             <ImagePortrait
-              image={character.image}
+              image={character.image["Classic"]}
               title={character.name}
               width={50}
               height={50}
@@ -106,7 +132,7 @@ export const AvailableCharacterSelections = ({
   );
 };
 
-export function GetCharacterById(id: string) {
+export function GetCharacterById(id: string | undefined) {
   for (const character of Characters) {
     if (character.id === id) {
       return character;

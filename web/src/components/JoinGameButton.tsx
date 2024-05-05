@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  CastleOutlined,
+  GamepadOutlined,
+  SearchOutlined,
+} from "@mui/icons-material";
 import PersonAddAlt1 from "@mui/icons-material/PersonAddAlt1";
 import {
   Alert,
@@ -10,6 +15,7 @@ import {
   DialogTitle,
   FormControl,
   InputLabel,
+  MenuItem,
   Select,
   SelectChangeEvent,
   TextField,
@@ -35,6 +41,7 @@ export default function JoinGameButton() {
   const [open, setOpen] = useState(false);
   const [valid, setValid] = useState(false);
   const [character, setCharacter] = useState("");
+  const [theme, setTheme] = useState("Classic");
   const [spectator, setSpectator] = useState(false);
   const [characters, setCharacters] = useState<string[]>([]);
   const handleOpen = () => setOpen(true);
@@ -46,6 +53,10 @@ export default function JoinGameButton() {
   };
   const handleCharacterChange = (event: SelectChangeEvent) => {
     setCharacter(event.target.value as string);
+  };
+
+  const handleThemeChange = (event: SelectChangeEvent) => {
+    setTheme(event.target.value as string);
   };
 
   useEffect(() => {
@@ -129,6 +140,23 @@ export default function JoinGameButton() {
               </Select>
             </FormControl>
           )}
+          <FormControl fullWidth>
+            <InputLabel>Board Theme</InputLabel>
+            <Select
+              value={theme}
+              label="Board Theme"
+              onChange={handleThemeChange}
+            >
+              {["Classic", "8-Bit", "Medieval"].map((theme) => (
+                <MenuItem key={theme} value={theme}>
+                  <span className="pr-1">{theme}</span>{" "}
+                  {theme === "Classic" && <SearchOutlined fontSize="small" />}
+                  {theme === "8-Bit" && <GamepadOutlined fontSize="small" />}
+                  {theme === "Medieval" && <CastleOutlined fontSize="small" />}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
         {readyState !== ReadyState.OPEN && (
           <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
@@ -168,7 +196,7 @@ export default function JoinGameButton() {
               href={
                 spectator
                   ? `/game?watch=${gameId}`
-                  : `/game?join=${gameId}&character=${character}`
+                  : `/game?join=${gameId}&character=${character}&theme=${theme}`
               }
             >
               <Button variant="contained">Join</Button>

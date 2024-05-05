@@ -1,5 +1,11 @@
 "use client";
 
+import { CharacterSelections, Characters } from "@/components/utils/characters";
+import {
+  CastleOutlined,
+  GamepadOutlined,
+  SearchOutlined,
+} from "@mui/icons-material";
 import RocketLaunchOutlined from "@mui/icons-material/RocketLaunchOutlined";
 import {
   Alert,
@@ -15,9 +21,8 @@ import {
   Select,
   SelectChangeEvent,
 } from "@mui/material";
-import { useState } from "react";
-import { CharacterSelections, Characters } from "@/components/utils/characters";
 import Link from "next/link";
+import { useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function StartGameButton() {
@@ -30,6 +35,7 @@ export default function StartGameButton() {
 
   const [open, setOpen] = useState(false);
   const [character, setCharacter] = useState(Characters[0].id);
+  const [theme, setTheme] = useState("Classic");
   const [playerCount, setPlayerCount] = useState("3");
 
   const handleOpen = () => setOpen(true);
@@ -37,6 +43,10 @@ export default function StartGameButton() {
 
   const handleCharacterChange = (event: SelectChangeEvent) => {
     setCharacter(event.target.value as string);
+  };
+
+  const handleThemeChange = (event: SelectChangeEvent) => {
+    setTheme(event.target.value as string);
   };
 
   const handlePlayerCountChange = (event: SelectChangeEvent) => {
@@ -82,6 +92,23 @@ export default function StartGameButton() {
               ))}
             </Select>
           </FormControl>
+          <FormControl fullWidth>
+            <InputLabel>Board Theme</InputLabel>
+            <Select
+              value={theme}
+              label="Board Theme"
+              onChange={handleThemeChange}
+            >
+              {["Classic", "8-Bit", "Medieval"].map((theme) => (
+                <MenuItem key={theme} value={theme}>
+                  <span className="pr-1">{theme}</span>{" "}
+                  {theme === "Classic" && <SearchOutlined fontSize="small" />}
+                  {theme === "8-Bit" && <GamepadOutlined fontSize="small" />}
+                  {theme === "Medieval" && <CastleOutlined fontSize="small" />}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
         {readyState !== ReadyState.OPEN && (
           <Alert severity="error" className="rounded mt-2 ml-2 mr-2">
@@ -98,7 +125,7 @@ export default function StartGameButton() {
           )}
           {readyState === ReadyState.OPEN && (
             <Link
-              href={`/game?character=${character}&player_count=${playerCount}`}
+              href={`/game?character=${character}&player_count=${playerCount}&theme=${theme}`}
             >
               <Button variant="contained">Start</Button>
             </Link>

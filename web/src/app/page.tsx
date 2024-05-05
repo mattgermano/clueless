@@ -1,10 +1,9 @@
 import ImagePortrait from "@/components/ImagePortrait";
-import StartGameButton from "@/components/StartGameButton";
 import JoinGameButton from "@/components/JoinGameButton";
 import Particles from "@/components/Particles";
 import RulesButton from "@/components/RulesButton";
+import StartGameButton from "@/components/StartGameButton";
 import { Characters } from "@/components/utils/characters";
-import React from "react";
 
 export default function Home() {
   const characterPortraits = Characters.flatMap((character, index, array) => {
@@ -16,7 +15,7 @@ export default function Home() {
       <ImagePortrait
         key={character.id}
         title={character.name}
-        image={character.image}
+        image={character.image["Classic"]}
       />,
       ...(isMiddle
         ? [

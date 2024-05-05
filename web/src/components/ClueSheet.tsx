@@ -1,3 +1,4 @@
+import { Theme } from "@/app/game/page";
 import { ArticleOutlined } from "@mui/icons-material";
 import {
   Button,
@@ -108,9 +109,14 @@ const initialRoomCheckboxStates: RoomCheckboxStates = {
 interface ClueCardProps {
   character?: string | null;
   characterCards?: CharacterCards;
+  theme: Theme;
 }
 
-export default function ClueCard({ character, characterCards }: ClueCardProps) {
+export default function ClueCard({
+  character,
+  characterCards,
+  theme,
+}: ClueCardProps) {
   const [open, setOpen] = useState(false);
   const [suspectCheckboxStates, setSuspectCheckboxStates] = useState(
     initialSuspectCheckboxStates,
@@ -192,9 +198,9 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={character.name}
-                        image={character.image}
-                        width={45}
-                        height={45}
+                        image={character.image[theme]}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (
@@ -244,9 +250,9 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={weapon.name}
-                        image={weapon.image}
-                        width={45}
-                        height={45}
+                        image={weapon.image[theme]}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (
@@ -294,9 +300,9 @@ export default function ClueCard({ character, characterCards }: ClueCardProps) {
                     <TableCell component="th" scope="row">
                       <ImagePortrait
                         title={room.name}
-                        image={room.image}
-                        width={45}
-                        height={45}
+                        image={room.image[theme]}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (
