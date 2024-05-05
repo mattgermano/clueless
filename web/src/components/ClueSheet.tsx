@@ -199,8 +199,8 @@ export default function ClueCard({
                       <ImagePortrait
                         title={character.name}
                         image={character.image[theme]}
-                        width={45}
-                        height={45}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (
@@ -251,8 +251,8 @@ export default function ClueCard({
                       <ImagePortrait
                         title={weapon.name}
                         image={weapon.image[theme]}
-                        width={45}
-                        height={45}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (
@@ -301,8 +301,8 @@ export default function ClueCard({
                       <ImagePortrait
                         title={room.name}
                         image={room.image[theme]}
-                        width={45}
-                        height={45}
+                        width={40}
+                        height={40}
                       />
                     </TableCell>
                     {[...Array(7)].map((_, index) => (

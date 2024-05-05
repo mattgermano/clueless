@@ -32,6 +32,12 @@ Clue®.
 - **[@bxchaney](https://github.com/bxchaney)**
 - **[@mattgermano](https://github.com/mattgermano)**
 
+## Attributions
+
+The source code for the background particle effect was provided by a template
+from [Cruip](https://cruip.com/). The tutorial and source code can be found
+[here](https://cruip-tutorials.vercel.app/particle-animation/#0).
+
 ## License
 
 Clue-Less is licensed under the terms of the MIT license - see [LICENSE](./LICENSE).

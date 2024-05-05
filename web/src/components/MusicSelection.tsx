@@ -57,11 +57,11 @@ export default function MusicSelection() {
             <InputLabel>Music</InputLabel>
             <Select value={music} label="Music" onChange={handleMusicChange}>
               <MenuItem value="None">None</MenuItem>
-              <MenuItem value="/music/shadows_of_the_night.mp3">
-                Shadows of the Night
-              </MenuItem>
               <MenuItem value="/music/whispering_shadows.mp3">
                 Whispering Shadows
+              </MenuItem>
+              <MenuItem value="/music/shadows_of_the_night.mp3">
+                Shadows of the Night
               </MenuItem>
               <MenuItem value="/music/phantom_echoes.mp3">
                 Phantom Echoes
