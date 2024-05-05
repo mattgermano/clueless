@@ -31,3 +31,23 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px; /* Adjust the width of the vertical scrollbar */
+  height: 2px; /* Adjust the height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* Optional: the track of the scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: darkgrey; /* Scroll thumb color */
+  border-radius: 10px; /* Scroll thumb border radius */
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 2px; /* Adjust the width of the vertical scrollbar */
+  height: 2px; /* Adjust the height of the horizontal scrollbar */
+}

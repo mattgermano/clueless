@@ -55,13 +55,14 @@ export const Chat = ({ messages, handleSendChat }: ChatProps) => {
             label="Game Events"
           />
           <FormControlLabel value="chat" control={<Radio />} label="Chat" />
+          <FormControlLabel value="both" control={<Radio />} label="Both" />
         </RadioGroup>
       </FormControl>
-      {radioSelection === "chat" && (
-        <PlayerChat messages={chatMessages} handleSendChat={handleSendChat} />
-      )}
-      {radioSelection === "game_event" && (
+      {(radioSelection === "game_event" || radioSelection === "both") && (
         <EventLog messages={gameEventMessages} />
+      )}
+      {(radioSelection === "chat" || radioSelection === "both") && (
+        <PlayerChat messages={chatMessages} handleSendChat={handleSendChat} />
       )}
     </>
   );

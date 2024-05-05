@@ -187,6 +187,17 @@ export default function Game() {
       };
 
       sendJsonMessage(event);
+
+      setCounter(counter + 1);
+      setMessages((m) => [
+        ...m,
+        {
+          id: counter,
+          type: "system",
+          event_type: "end_turn",
+          message: `${GetCharacterById(currentTurn)?.name} has ended their turn!`,
+        },
+      ]);
     }
   }
 
@@ -568,6 +579,19 @@ export default function Game() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastJsonMessage]);
+
+  // Prompt the user to confirm that they want to reload the page after a refresh
+  useEffect(() => {
+    function beforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", beforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  });
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",

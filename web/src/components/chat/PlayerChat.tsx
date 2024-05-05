@@ -1,5 +1,5 @@
 import { SendOutlined } from "@mui/icons-material";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { PlayerMessage, PlayerMessageProps } from "./Message";
 interface PlayerChatProps {
@@ -14,7 +14,13 @@ export default function PlayerChat({
   const [chatMessage, setChatMessage] = useState<string>("");
   return (
     <>
-      <Box className="text-left" height="calc(100% - 80px)">
+      <Box
+        className="text-left ring-gray-600 ring-2 mr-2 ml-2 mt-2"
+        height="calc(100% - 80px)"
+      >
+        <Typography className="text-center" variant="h6">
+          Game Chat
+        </Typography>
         {messages.map((msg) => (
           <PlayerMessage
             id={1}
@@ -26,7 +32,7 @@ export default function PlayerChat({
           ></PlayerMessage>
         ))}
       </Box>
-      <Box justifyContent={"left"} display="flex" m="20px">
+      <Box justifyContent={"left"} className="flex" m="20px">
         <TextField
           label="Send a message..."
           value={chatMessage}
