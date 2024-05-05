@@ -52,41 +52,45 @@ class CluelessConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, code) -> None:
         """Disconnects clients from the channel"""
         for game_id in JOIN_GAMES.keys():
-            if self.channel_name in GAME_CHARACTERS[game_id]:
-                disconnect_event = {
-                    "type": "disconnect",
-                    "character": GAME_CHARACTERS[game_id][self.channel_name],
-                }
-
-                await self.channel_layer.group_send(
-                    game_id,
-                    {"type": "game_event", "message": json.dumps(disconnect_event)},
-                )
-
-                game = JOIN_GAMES[game_id]
-                if game.turn["character"] == disconnect_event["character"]:
-                    game.next_turn()
-                    game.turn_number -= 1
-                    await self.broadcast_turn(game_id)
-
-                game.characters.remove(disconnect_event["character"])
-                if not game.started:
-                    del game.character_positions[disconnect_event["character"]]
-                    await self.broadcast_positions(game_id)
-
-                if len(game.characters) < 2 and game.turn_number > 1:
-                    end_game_event = {
-                        "type": "end_game",
-                        "reason": "not_enough_players",
-                        "suspect": game.solution["suspect"],
-                        "weapon": game.solution["weapon"],
-                        "room": game.solution["room"],
+            if game_id in GAME_CHARACTERS:
+                if self.channel_name in GAME_CHARACTERS[game_id]:
+                    disconnect_event = {
+                        "type": "disconnect",
+                        "character": GAME_CHARACTERS[game_id][self.channel_name],
                     }
 
                     await self.channel_layer.group_send(
                         game_id,
-                        {"type": "game_event", "message": json.dumps(end_game_event)},
+                        {"type": "game_event", "message": json.dumps(disconnect_event)},
                     )
+
+                    game = JOIN_GAMES[game_id]
+                    if game.turn["character"] == disconnect_event["character"]:
+                        game.next_turn()
+                        game.turn_number -= 1
+                        await self.broadcast_turn(game_id)
+
+                    game.characters.remove(disconnect_event["character"])
+                    if not game.started:
+                        del game.character_positions[disconnect_event["character"]]
+                        await self.broadcast_positions(game_id)
+
+                    if len(game.characters) < 2 and game.turn_number > 1:
+                        end_game_event = {
+                            "type": "end_game",
+                            "reason": "not_enough_players",
+                            "suspect": game.solution["suspect"],
+                            "weapon": game.solution["weapon"],
+                            "room": game.solution["room"],
+                        }
+
+                        await self.channel_layer.group_send(
+                            game_id,
+                            {
+                                "type": "game_event",
+                                "message": json.dumps(end_game_event),
+                            },
+                        )
 
             await self.channel_layer.group_discard(game_id, self.channel_name)
 
@@ -286,6 +290,17 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         # Send a "position" event to update the UI
         await self.broadcast_positions(event["game_id"])
         await self.broadcast_turn(event["game_id"])
+
+        room = ""
+        if (event["x"], event["y"]) in clueless.hallways_positions:
+            room = "Hallway"
+        elif (event["x"], event["y"]) in clueless.room_positions:
+            room = clueless.room_positions[(event["x"], event["y"])]
+
+        move_event = {"type": "move", "character": event["character"], "room": room}
+        await self.channel_layer.group_send(
+            event["game_id"], {"type": "game_event", "message": json.dumps(move_event)}
+        )
 
     @require_keys(["game_id", "character", "suspect", "weapon"])
     async def suggest(self, event: Dict[str, str]):

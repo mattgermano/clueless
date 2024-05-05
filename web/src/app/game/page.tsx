@@ -464,6 +464,21 @@ export default function Game() {
           }
           break;
 
+        case "move":
+          if (event.character !== undefined && event.room !== undefined) {
+            setCounter(counter + 1);
+            setMessages((m) => [
+              ...m,
+              {
+                id: counter,
+                type: "system",
+                event_type: "move",
+                message: `${GetCharacterById(event.character)?.name} moved to the ${event.room === "Hallway" ? event.room : GetRoomById(event.room)?.name}!`,
+              },
+            ]);
+          }
+          break;
+
         case "lose":
           setCounter(counter + 1);
           setMessages((m) => [
