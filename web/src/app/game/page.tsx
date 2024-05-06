@@ -249,9 +249,9 @@ export default function Game() {
           player_count: playerCount ? parseInt(playerCount) : 0,
         };
       }
-      console.log(
-        `Sending event to backend: ${JSON.stringify(event, null, 2)}`,
-      );
+      // console.log(
+      //   `Sending event to backend: ${JSON.stringify(event, null, 2)}`,
+      // );
       sendJsonMessage(event);
     }
   }, [readyState, sendJsonMessage]);
@@ -263,9 +263,9 @@ export default function Game() {
       typeof lastJsonMessage === "object" &&
       "type" in lastJsonMessage
     ) {
-      console.log(
-        `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
-      );
+      // console.log(
+      //   `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
+      // );
 
       const event = lastJsonMessage as EventObject;
       switch (event.type) {

@@ -80,9 +80,9 @@ export default function JoinGameButton() {
       typeof lastJsonMessage === "object" &&
       "type" in lastJsonMessage
     ) {
-      console.log(
-        `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
-      );
+      // console.log(
+      //   `Received event from backend: ${JSON.stringify(lastJsonMessage, null, 2)}`,
+      // );
 
       const event = lastJsonMessage as any;
       switch (event.type) {
