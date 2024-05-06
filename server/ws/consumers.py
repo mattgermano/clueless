@@ -292,6 +292,10 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             await self.error("Game with ID {} not found!".format(event["watch"]))
             return
 
+        events = manager.Manager.get_game_events(game.id)
+        for game_event in events:
+            await self.send(text_data=json.dumps(game_event))
+
         await self.channel_layer.group_add(game.id, self.channel_name)
         await self.broadcast_positions(game.id)
 
@@ -525,6 +529,38 @@ class CluelessConsumer(AsyncWebsocketConsumer):
             game.turn["actions"].append(clueless.Action.Suggest.name)
 
         game.turn["actions"].append(clueless.Action.Accuse.name)
+
+        game.last_positions[game.last_suggestion["suspect"]] = game.character_positions[
+            game.last_suggestion["character"]
+        ]
+
+        # Check if player is trapped in room
+        position_x, position_y = game.character_positions[game.turn["character"]]
+
+        # Define the relative positions of adjacent hallways
+        relative_positions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+        # Initialize counters for adjacent hallways and players in those hallways
+        adjacent_hallways, players_in_adjacent_hallway = 0, 0
+        # Player is not in a hallway or in corner rooms, implying they are in a room
+        if (position_x, position_y) not in clueless.hallways_positions and (
+            position_x,
+            position_y,
+        ) not in [(1, 1), (5, 5), (5, 1), (1, 5)]:
+            # Iterate over each relative position to check adjacent hallways
+            for dx, dy in relative_positions:
+                adjacent_pos = (position_x + dx, position_y + dy)
+                if adjacent_pos in clueless.hallways_positions:
+                    adjacent_hallways += 1
+                    if game.character_in_room(*adjacent_pos):
+                        players_in_adjacent_hallway += 1
+
+            # Check if the player is trapped
+            if adjacent_hallways == players_in_adjacent_hallway:
+                game.turn["actions"] = [
+                    clueless.Action.Accuse.name,
+                    clueless.Action.End.name,
+                ]
 
         await self.broadcast_turn(event["game_id"])
 

@@ -249,31 +249,6 @@ class Clueless:
         ):
             self.next_turn()
 
-        # Check if player is trapped in room
-        position_x, position_y = self.character_positions[self.turn["character"]]
-
-        # Define the relative positions of adjacent hallways
-        relative_positions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-
-        # Initialize counters for adjacent hallways and players in those hallways
-        adjacent_hallways, players_in_adjacent_hallway = 0, 0
-        # Player is not in a hallway or in corner rooms, implying they are in a room
-        if (position_x, position_y) not in hallways_positions and (
-            position_x,
-            position_y,
-        ) not in [(1, 1), (5, 5), (5, 1), (1, 5)]:
-            # Iterate over each relative position to check adjacent hallways
-            for dx, dy in relative_positions:
-                adjacent_pos = (position_x + dx, position_y + dy)
-                if adjacent_pos in hallways_positions:
-                    adjacent_hallways += 1
-                    if self.character_in_room(*adjacent_pos):
-                        players_in_adjacent_hallway += 1
-
-            # Check if the player is trapped
-            if adjacent_hallways == players_in_adjacent_hallway:
-                self.turn["actions"] = [Action.Accuse.name, Action.End.name]
-
     def move(self, character: str, x: int, y: int) -> None:
         """Moves a character to a given square
 
