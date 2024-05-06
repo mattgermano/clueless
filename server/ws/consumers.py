@@ -520,19 +520,14 @@ class CluelessConsumer(AsyncWebsocketConsumer):
         if (
             position_x,
             position_y,
-        ) not in clueless.hallways_positions and game.last_positions[
+        ) not in clueless.hallways_positions and game.moved_by_suggestion[
             game.turn["character"]
-        ] != (
-            position_x,
-            position_y,
-        ):
+        ]:
             game.turn["actions"].append(clueless.Action.Suggest.name)
 
         game.turn["actions"].append(clueless.Action.Accuse.name)
 
-        game.last_positions[game.last_suggestion["suspect"]] = game.character_positions[
-            game.last_suggestion["character"]
-        ]
+        game.moved_by_suggestion[game.turn["character"]] = False
 
         # Check if player is trapped in room
         position_x, position_y = game.character_positions[game.turn["character"]]

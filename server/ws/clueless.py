@@ -106,6 +106,7 @@ class Clueless:
         self.turn_number = 1
         self.disprover = None
         self.last_suggestion = {}
+        self.moved_by_suggestion = {}
         self.character_cards: Dict[str, List[str]] = {}
         self.clue_cards = deepcopy(clue_cards)
         self.turn = {"character": "", "actions": [Action.NONE.name]}
@@ -125,6 +126,7 @@ class Clueless:
             self.characters.append(character)
             self.character_positions[character] = starting_positions[character]
             self.character_cards[character] = []
+            self.moved_by_suggestion[character] = False
 
             if self.is_full():
                 # Randomly generate the winning solution when the game becomes full
@@ -338,6 +340,7 @@ class Clueless:
             "weapon": weapon,
             "room": room_positions[self.character_positions[character]],
         }
+        self.moved_by_suggestion[suspect] = True
 
     def accuse(self, character: str, suspect: str, weapon: str, room: str) -> None:
         """Processes an accusation to determine if a player has won the game
