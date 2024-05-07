@@ -5,7 +5,7 @@ import { Chat, ChatProps } from "./Chat";
 
 export const ChatBox = ({ messages, handleSendChat }: ChatProps) => {
   useEffect(() => {}, [messages]);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <div>
       <Button variant="outlined" onClick={() => setOpen(!open)}>
@@ -23,8 +23,8 @@ export const ChatBox = ({ messages, handleSendChat }: ChatProps) => {
             flexDirection: "column",
             "& .MuiDrawer-paper": { boxSizing: "border-box" },
             height: "calc(100%)",
-            minWidth: 400,
-            maxWidth: 400,
+            minWidth: 325,
+            maxWidth: 325,
           }}
         >
           <Chat messages={messages} handleSendChat={handleSendChat} />
